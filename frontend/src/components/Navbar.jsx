@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 
 export default function Navbar() {
-  const { user, isAdmin, logout } = useAuth()
+  const { user, isAdmin, initialising, logout } = useAuth()
   const { itemCount } = useCart()
   const navigate = useNavigate()
 
@@ -34,7 +34,9 @@ export default function Navbar() {
             {itemCount > 0 && <span className="cart-badge">{itemCount}</span>}
           </NavLink>
 
-          {user ? (
+          {/* While a stored token is being checked, show neither state — avoids a
+              "Log in" flash for returning users. */}
+          {initialising ? null : user ? (
             <>
               <span className="nav-user" title={user.email}>
                 Hi, {user.name.split(' ')[0]}

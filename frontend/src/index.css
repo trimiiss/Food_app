@@ -1063,3 +1063,17 @@ img {
 .summary .btn + .btn {
   margin-top: 8px;
 }
+
+/* ---- Auth pages ---------------------------------------------------------- */
+.demo-hint {
+  margin: 16px 0 0;
+  font-size: 0.85rem;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgb(255 255 255 / 60%);
+}
