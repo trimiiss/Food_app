@@ -938,3 +938,128 @@ img {
   -webkit-appearance: none;
   margin: 0;
 }
+
+/* ---- Cart ---------------------------------------------------------------- */
+.two-column {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .two-column {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sticky-card {
+  position: sticky;
+  top: 88px;
+}
+
+.cart-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.cart-item {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding: 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.cart-item-image .product-image {
+  border-radius: var(--radius-sm);
+  aspect-ratio: 1;
+}
+
+.cart-item-info {
+  display: grid;
+  gap: 2px;
+  justify-items: start;
+}
+
+.cart-item-name {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.cart-item-info .link-button {
+  margin-top: 4px;
+  font-size: 0.85rem;
+}
+
+.cart-item-controls {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+}
+
+@media (max-width: 520px) {
+  .cart-item {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+
+  .cart-item-controls {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+/* ---- Order summary ------------------------------------------------------- */
+.summary dl {
+  margin: 0 0 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.summary dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.summary dt {
+  color: var(--color-muted);
+}
+
+.summary dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.summary .summary-total {
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+  font-size: 1.1rem;
+}
+
+.summary .summary-total dt {
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.summary .summary-total dd {
+  font-weight: 800;
+}
+
+.summary-note {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+.summary .btn + .btn {
+  margin-top: 8px;
+}
