@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\OrderStatus;
+use Carbon\CarbonInterface;
 use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -53,9 +54,11 @@ class Order extends Model
      * Human-friendly reference shown to customers, e.g. ORD-20260917-K3F9QX.
      * Not guessable/enumerable like the numeric id, and the unique index on the
      * column is the final guard against an (astronomically unlikely) collision.
+     *
+     * @param  CarbonInterface|null  $placedAt  defaults to now; lets seeders back-date consistently
      */
-    public static function generateOrderNumber(): string
+    public static function generateOrderNumber(?CarbonInterface $placedAt = null): string
     {
-        return 'ORD-'.now()->format('Ymd').'-'.Str::upper(Str::random(6));
+        return 'ORD-'.($placedAt ?? now())->format('Ymd').'-'.Str::upper(Str::random(6));
     }
 }

@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\OrderStatus;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\OrderService;
@@ -49,7 +50,13 @@ class DemoOrderSeeder extends Seeder
             // Seeding shortcut: set the historical status/time directly rather than
             // replaying each transition. Runtime changes always go through OrderService.
             $placedAt = now()->subDays($daysAgo)->subHours(2);
-            $order->forceFill(['status' => $status, 'created_at' => $placedAt, 'updated_at' => $placedAt])->save();
+            $order->forceFill([
+                'status' => $status,
+                // Keep the date embedded in the order number consistent with the back-dated timestamp.
+                'order_number' => Order::generateOrderNumber($placedAt),
+                'created_at' => $placedAt,
+                'updated_at' => $placedAt,
+            ])->save();
         }
     }
 }
