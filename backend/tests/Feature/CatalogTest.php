@@ -11,6 +11,15 @@ class CatalogTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_shop_settings_are_public(): void
+    {
+        config(['shop.currency' => 'EUR', 'shop.delivery_fee' => 2.5, 'shop.max_item_quantity' => 50]);
+
+        $this->getJson('/api/v1/shop')
+            ->assertOk()
+            ->assertExactJson(['data' => ['currency' => 'EUR', 'delivery_fee' => 2.5, 'max_item_quantity' => 50]]);
+    }
+
     public function test_categories_list_counts_only_available_products(): void
     {
         $pizza = Category::factory()->create(['name' => 'Pizza', 'slug' => 'pizza']);
