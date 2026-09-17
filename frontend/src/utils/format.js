@@ -13,6 +13,11 @@ export function formatDateTime(isoString) {
   return isoString ? dateTimeFormatter.format(new Date(isoString)) : ''
 }
 
+/** "1 product" / "3 products" */
+export function pluralize(count, singular, plural = `${singular}s`) {
+  return `${count} ${count === 1 ? singular : plural}`
+}
+
 /**
  * Sum line totals in integer cents — the same reason the backend does:
  * 0.1 + 0.2 !== 0.3 in floating point.

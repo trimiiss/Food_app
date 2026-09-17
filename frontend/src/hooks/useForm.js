@@ -16,7 +16,15 @@ export function useForm(initialValues) {
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
-  const setValue = (name, value) => setValues((previous) => ({ ...previous, [name]: value }))
+  const setValue = (name, value) => {
+    setValues((previous) => ({ ...previous, [name]: value }))
+    // Editing a field clears its stale server error; other fields keep theirs.
+    setError((previous) => {
+      if (!previous?.errors?.[name]) return previous
+      const { [name]: _cleared, ...remaining } = previous.errors
+      return new ApiError(previous.message, previous.status, remaining)
+    })
+  }
 
   const bind = (name) => ({
     name,

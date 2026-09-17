@@ -5,7 +5,7 @@ import { StatusBadge } from '../components/OrderStatus'
 import Pagination from '../components/Pagination'
 import { useShop } from '../context/ShopContext'
 import { useApi } from '../hooks/useApi'
-import { formatDateTime } from '../utils/format'
+import { formatDateTime, pluralize } from '../utils/format'
 
 /** The signed-in customer's order history, newest first. */
 export default function OrdersPage() {
@@ -34,7 +34,7 @@ export default function OrdersPage() {
       <div className="page-header">
         <div>
           <h1>My orders</h1>
-          <p>{data.meta.total} orders</p>
+          <p>{pluralize(data.meta.total, 'order')}</p>
         </div>
       </div>
 

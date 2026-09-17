@@ -1,8 +1,11 @@
 import { Route, Routes } from 'react-router'
 import Layout from './components/Layout'
 import { RequireAdmin, RequireAuth } from './components/RouteGuards'
+import AdminCategoriesPage from './pages/admin/AdminCategoriesPage'
 import AdminLayout from './pages/admin/AdminLayout'
 import AdminLoginPage from './pages/admin/AdminLoginPage'
+import AdminProductFormPage from './pages/admin/AdminProductFormPage'
+import AdminProductsPage from './pages/admin/AdminProductsPage'
 import AdminRegisterPage from './pages/admin/AdminRegisterPage'
 import DashboardPage from './pages/admin/DashboardPage'
 import CartPage from './pages/CartPage'
@@ -45,6 +48,11 @@ export default function App() {
       <Route path="admin" element={<RequireAdmin />}>
         <Route element={<AdminLayout />}>
           <Route index element={<DashboardPage />} />
+          <Route path="products" element={<AdminProductsPage />} />
+          {/* Distinct keys: same component, but "new" and "edit" must not share form state. */}
+          <Route path="products/new" element={<AdminProductFormPage key="new" />} />
+          <Route path="products/:id/edit" element={<AdminProductFormPage key="edit" />} />
+          <Route path="categories" element={<AdminCategoriesPage />} />
         </Route>
       </Route>
     </Routes>

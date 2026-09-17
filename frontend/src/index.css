@@ -1538,3 +1538,96 @@ a.stat-card:hover {
   align-items: center;
   gap: 12px;
 }
+
+/* ---- Admin: lists & forms -------------------------------------------------- */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.toolbar-search {
+  flex: 1 1 260px;
+  max-width: 360px;
+}
+
+.toolbar select.input {
+  min-width: 180px;
+}
+
+.table-wrap.is-refreshing {
+  opacity: 0.6;
+  transition: opacity 150ms ease;
+}
+
+.table tr.is-selected td {
+  background: var(--color-primary-soft);
+}
+
+.thumb-cell {
+  width: 64px;
+}
+
+.thumb {
+  width: 48px;
+  height: 48px;
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  font-size: 1.2rem;
+}
+
+.small {
+  font-size: 0.8rem;
+}
+
+.badge-button {
+  border: 0;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.badge-button:hover:not(:disabled) {
+  filter: brightness(0.95);
+  box-shadow: 0 0 0 2px currentcolor inset;
+}
+
+.badge-button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.admin-form-grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  align-items: start;
+}
+
+@media (max-width: 1000px) {
+  .admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.preview-image {
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+}
+
+/* Table thumbnails: opt out of the global img max-width so they stay square. */
+.table .thumb-cell {
+  width: 1%;
+  padding-right: 4px;
+}
+
+.table .thumb {
+  max-width: none;
+}
