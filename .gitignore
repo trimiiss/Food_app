@@ -1,0 +1,46 @@
+# ---- OS / editor ----------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+
+# ---- Laravel (backend/) ---------------------------------------------------
+/backend/vendor/
+/backend/node_modules/
+/backend/.env
+/backend/.env.backup
+/backend/.env.production
+/backend/storage/*.key
+/backend/storage/pail
+/backend/public/storage
+/backend/public/hot
+/backend/public/build
+/backend/.phpunit.result.cache
+/backend/.phpunit.cache
+/backend/auth.json
+/backend/Homestead.json
+/backend/Homestead.yaml
+/backend/database/*.sqlite
+/backend/database/*.sqlite-journal
+
+# ---- React (frontend/) ----------------------------------------------------
+/frontend/node_modules/
+/frontend/dist/
+/frontend/dist-ssr/
+/frontend/.env
+/frontend/.env.local
+/frontend/.env.*.local
+/frontend/*.local
+/frontend/coverage/
+
+# ---- Logs -----------------------------------------------------------------
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---- Docker ---------------------------------------------------------------
+# Optional root-level overrides for compose credentials; never commit secrets.
+/.env

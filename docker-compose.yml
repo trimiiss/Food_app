@@ -1,0 +1,41 @@
+# MySQL 8 for the Food Ordering App.
+#
+# This is the only infrastructure that runs in Docker. PHP/Composer and Node
+# are expected on the host (see README.md prerequisites) — that keeps the
+# day-to-day dev loop (artisan, vite HMR) fast and free of container overhead,
+# while still meaning nobody has to install MySQL natively.
+#
+#   docker compose up -d
+#
+# Credentials below intentionally match backend/.env.example so a fresh clone
+# connects with zero edits.
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: foodapp-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-food_app}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_secret}
+      MYSQL_USER: ${MYSQL_USER:-food_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-food_secret}
+    ports:
+      # host:container — change the host port if 3306 is already taken locally.
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      # Named volume: data survives `docker compose down` and container restarts.
+      # Use `docker compose down -v` to wipe it deliberately.
+      - foodapp_mysql_data:/var/lib/mysql
+    healthcheck:
+      # Lets `docker compose up -d --wait` block until MySQL actually accepts
+      # connections, instead of just until the container has started.
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD:-root_secret}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+volumes:
+  foodapp_mysql_data:
+    name: foodapp_mysql_data
