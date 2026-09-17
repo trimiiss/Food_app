@@ -4,6 +4,8 @@ import { RequireAdmin, RequireAuth } from './components/RouteGuards'
 import AdminCategoriesPage from './pages/admin/AdminCategoriesPage'
 import AdminLayout from './pages/admin/AdminLayout'
 import AdminLoginPage from './pages/admin/AdminLoginPage'
+import AdminOrderDetailPage from './pages/admin/AdminOrderDetailPage'
+import AdminOrdersPage from './pages/admin/AdminOrdersPage'
 import AdminProductFormPage from './pages/admin/AdminProductFormPage'
 import AdminProductsPage from './pages/admin/AdminProductsPage'
 import AdminRegisterPage from './pages/admin/AdminRegisterPage'
@@ -48,6 +50,8 @@ export default function App() {
       <Route path="admin" element={<RequireAdmin />}>
         <Route element={<AdminLayout />}>
           <Route index element={<DashboardPage />} />
+          <Route path="orders" element={<AdminOrdersPage />} />
+          <Route path="orders/:id" element={<AdminOrderDetailPage />} />
           <Route path="products" element={<AdminProductsPage />} />
           {/* Distinct keys: same component, but "new" and "edit" must not share form state. */}
           <Route path="products/new" element={<AdminProductFormPage key="new" />} />
