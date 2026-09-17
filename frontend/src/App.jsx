@@ -1,6 +1,10 @@
 import { Route, Routes } from 'react-router'
 import Layout from './components/Layout'
-import { RequireAuth } from './components/RouteGuards'
+import { RequireAdmin, RequireAuth } from './components/RouteGuards'
+import AdminLayout from './pages/admin/AdminLayout'
+import AdminLoginPage from './pages/admin/AdminLoginPage'
+import AdminRegisterPage from './pages/admin/AdminRegisterPage'
+import DashboardPage from './pages/admin/DashboardPage'
 import CartPage from './pages/CartPage'
 import CheckoutPage from './pages/CheckoutPage'
 import LoginPage from './pages/LoginPage'
@@ -26,6 +30,8 @@ export default function App() {
         <Route path="cart" element={<CartPage />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />
+        <Route path="admin/login" element={<AdminLoginPage />} />
+        <Route path="admin/register" element={<AdminRegisterPage />} />
 
         <Route element={<RequireAuth />}>
           <Route path="checkout" element={<CheckoutPage />} />
@@ -34,6 +40,12 @@ export default function App() {
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />
+      </Route>
+
+      <Route path="admin" element={<RequireAdmin />}>
+        <Route element={<AdminLayout />}>
+          <Route index element={<DashboardPage />} />
+        </Route>
       </Route>
     </Routes>
   )

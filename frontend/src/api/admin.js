@@ -1,0 +1,30 @@
+import client from './client'
+
+/*
+ * Admin endpoints (/api/v1/admin/*). The API enforces auth:sanctum + admin on
+ * every one of these; the SPA's RequireAdmin guard is only for UX.
+ */
+
+export const getStats = (options) => client.get('/admin/stats', options).then((r) => r.data.data)
+
+// ---- Categories -----------------------------------------------------------
+export const getAdminCategories = (options) => client.get('/admin/categories', options).then((r) => r.data.data)
+export const createCategory = (payload) => client.post('/admin/categories', payload).then((r) => r.data.data)
+export const updateCategory = (id, payload) => client.put(`/admin/categories/${id}`, payload).then((r) => r.data.data)
+export const deleteCategory = (id) => client.delete(`/admin/categories/${id}`)
+
+// ---- Products ---------------------------------------------------------------
+export const getAdminProducts = (params, options) =>
+  client.get('/admin/products', { params, ...options }).then((r) => r.data)
+export const getAdminProduct = (id, options) => client.get(`/admin/products/${id}`, options).then((r) => r.data.data)
+export const createProduct = (payload) => client.post('/admin/products', payload).then((r) => r.data.data)
+export const updateProduct = (id, payload) => client.put(`/admin/products/${id}`, payload).then((r) => r.data.data)
+export const deleteProduct = (id) => client.delete(`/admin/products/${id}`)
+
+// ---- Orders -------------------------------------------------------------------
+// List resolves to { data, meta, links, statuses }.
+export const getAdminOrders = (params, options) =>
+  client.get('/admin/orders', { params, ...options }).then((r) => r.data)
+export const getAdminOrder = (id, options) => client.get(`/admin/orders/${id}`, options).then((r) => r.data.data)
+export const updateOrderStatus = (id, status) =>
+  client.patch(`/admin/orders/${id}/status`, { status }).then((r) => r.data.data)
