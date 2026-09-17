@@ -5,7 +5,8 @@ import { useCallback, useEffect, useState } from 'react'
  *
  * - Aborts the in-flight request on unmount or when deps change, so a slow
  *   response for an old filter can never overwrite a newer one.
- * - Keeps the previous data while reloading to avoid layout flicker.
+ * - Keeps the previous data while reloading (no layout flicker) and when a
+ *   reload fails, so one failed background poll doesn't blank the page.
  *
  * A library like TanStack Query would add caching and retries; for a handful
  * of screens this ~30-line hook keeps the dependency list short.
@@ -23,7 +24,7 @@ export function useApi(fetcher, deps = []) {
         if (!controller.signal.aborted) setState({ data, error: null, loading: false })
       })
       .catch((error) => {
-        if (!controller.signal.aborted) setState({ data: null, error, loading: false })
+        if (!controller.signal.aborted) setState((previous) => ({ data: previous.data, error, loading: false }))
       })
 
     return () => controller.abort()
