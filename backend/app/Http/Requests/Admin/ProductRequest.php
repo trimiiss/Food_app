@@ -64,4 +64,19 @@ class ProductRequest extends FormRequest
             'price.decimal' => 'The price may have at most 2 decimal places.',
         ];
     }
+
+    /**
+     * Human-readable field names for the default messages
+     * ("The category field is required." rather than "category id").
+     *
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return [
+            'category_id' => 'category',
+            'image_url' => 'image URL',
+            'is_available' => 'availability',
+        ];
+    }
 }

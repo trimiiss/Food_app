@@ -152,7 +152,11 @@ class AdminTest extends TestCase
             'image_url' => 'javascript:alert(1)',
         ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['category_id', 'name', 'price', 'image_url']);
+            ->assertJsonValidationErrors(['category_id', 'name', 'price', 'image_url'])
+            ->assertJsonPath('errors.image_url.0', 'The image URL field must be a valid URL.');
+
+        $this->postJson('/api/v1/admin/products', ['name' => 'No Category', 'price' => 5])
+            ->assertJsonPath('errors.category_id.0', 'The category field is required.');
     }
 
     public function test_deleting_a_product_keeps_past_orders_intact(): void
