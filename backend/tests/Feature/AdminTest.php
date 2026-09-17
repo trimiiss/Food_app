@@ -252,8 +252,10 @@ class AdminTest extends TestCase
             ->assertJsonPath('data.available_products_count', 3)
             ->assertJsonPath('data.orders_count', 4)
             ->assertJsonPath('data.open_orders_count', 1)
-            ->assertJsonPath('data.orders_by_status.delivered', 2)
-            ->assertJsonPath('data.orders_by_status.preparing', 0)
+            ->assertJsonCount(count(OrderStatus::cases()), 'data.orders_by_status')
+            ->assertJsonPath('data.orders_by_status.0', ['value' => 'pending', 'label' => 'Pending', 'count' => 1, 'is_final' => false])
+            ->assertJsonPath('data.orders_by_status.2.count', 0)
+            ->assertJsonPath('data.orders_by_status.4', ['value' => 'delivered', 'label' => 'Delivered', 'count' => 2, 'is_final' => true])
             ->assertJsonPath('data.revenue', 30)
             ->assertJsonCount(4, 'data.recent_orders');
     }

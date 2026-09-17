@@ -23,20 +23,23 @@ class DashboardController extends Controller
             ->groupBy('status')
             ->pluck('aggregate', 'status');
 
-        $ordersByStatus = collect(OrderStatus::cases())->mapWithKeys(
-            fn (OrderStatus $status) => [$status->value => (int) ($counts[$status->value] ?? 0)]
-        );
-
-        $openStatuses = array_filter(OrderStatus::cases(), fn (OrderStatus $s) => ! $s->isFinal());
+        // Every status in lifecycle order, with its label, so the UI never
+        // keeps its own copy of the enum.
+        $ordersByStatus = collect(OrderStatus::cases())->map(fn (OrderStatus $status) => [
+            'value' => $status->value,
+            'label' => $status->label(),
+            'count' => (int) ($counts[$status->value] ?? 0),
+            'is_final' => $status->isFinal(),
+        ]);
 
         return response()->json([
             'data' => [
                 'products_count' => Product::count(),
                 'available_products_count' => Product::query()->available()->count(),
                 'categories_count' => Category::count(),
-                'orders_count' => $ordersByStatus->sum(),
-                'open_orders_count' => $ordersByStatus->only(array_column($openStatuses, 'value'))->sum(),
-                'orders_by_status' => $ordersByStatus,
+                'orders_count' => $ordersByStatus->sum('count'),
+                'open_orders_count' => $ordersByStatus->where('is_final', false)->sum('count'),
+                'orders_by_status' => $ordersByStatus->values(),
                 // Only delivered orders count as revenue; cancelled/in-flight don't.
                 'revenue' => (float) Order::query()->where('status', OrderStatus::Delivered)->sum('total'),
                 'recent_orders' => OrderResource::collection(
