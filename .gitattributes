@@ -1,0 +1,7 @@
+# Normalise line endings in the repository so checkouts behave the same on
+# Windows, macOS and Linux (backend/.gitattributes applies the same rule).
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary
