@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\OrderController;
@@ -46,4 +47,19 @@ Route::prefix('v1')->group(function () {
         Route::get('orders/{order}', [OrderController::class, 'show']);
         Route::post('orders/{order}/cancel', [OrderController::class, 'cancel']);
     });
+
+    // ---- Admin panel ------------------------------------------------------
+    Route::middleware(['auth:sanctum', 'admin'])
+        ->prefix('admin')
+        ->name('admin.')
+        ->group(function () {
+            Route::get('stats', Admin\DashboardController::class)->name('stats');
+
+            Route::apiResource('categories', Admin\CategoryController::class);
+            Route::apiResource('products', Admin\ProductController::class);
+
+            Route::get('orders', [Admin\OrderController::class, 'index'])->name('orders.index');
+            Route::get('orders/{order}', [Admin\OrderController::class, 'show'])->name('orders.show');
+            Route::patch('orders/{order}/status', [Admin\OrderController::class, 'updateStatus'])->name('orders.status');
+        });
 });
