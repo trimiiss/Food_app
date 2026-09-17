@@ -114,4 +114,17 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Registration Code
+    |--------------------------------------------------------------------------
+    |
+    | Shared secret required by POST /api/v1/admin/register. Anyone who could
+    | self-register as an admin would own the shop, so the endpoint is gated
+    | by this code; leave it empty to disable admin self-registration.
+    |
+    */
+
+    'admin_registration_code' => env('ADMIN_REGISTRATION_CODE'),
+
 ];
