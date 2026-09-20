@@ -3,21 +3,24 @@ import { placeOrder } from '../api/orders'
 import { EmptyState, ErrorMessage } from '../components/Feedback'
 import FormField from '../components/FormField'
 import OrderSummary from '../components/OrderSummary'
+import PromoCodeField from '../components/PromoCodeField'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useShop } from '../context/ShopContext'
+import { useCartPricing } from '../hooks/useCartPricing'
 import { useForm } from '../hooks/useForm'
 
 /**
- * Turns the client-side cart into a real order. Only product ids and
- * quantities are sent; the response carries the server-computed totals.
+ * Turns the client-side cart into a real order. Only product ids, quantities
+ * and the promo code are sent; the response carries the server's totals.
  */
 export default function CheckoutPage() {
   const { user } = useAuth()
-  const { items, subtotal, deliveryFee, estimatedTotal, clearCart, removeItem } = useCart()
+  const { items, subtotal, deliveryFee, estimatedTotal, promoCode, clearCart, removeItem } = useCart()
   const { money } = useShop()
   const navigate = useNavigate()
   const form = useForm({ delivery_address: '', contact_phone: '', notes: '' })
+  const { pricing, promoError, loading: pricingLoading, error: pricingError } = useCartPricing()
 
   if (items.length === 0) {
     return (
@@ -36,6 +39,9 @@ export default function CheckoutPage() {
       delivery_address: values.delivery_address,
       contact_phone: values.contact_phone,
       notes: values.notes || null,
+      // Only send a code the server just accepted, so a stale bad code can't
+      // block checkout; it is validated again server-side regardless.
+      promo_code: pricing?.promo_code ? promoCode : null,
     })
     navigate(`/orders/${order.id}`, { replace: true, state: { justPlaced: true } })
     clearCart()
@@ -48,6 +54,8 @@ export default function CheckoutPage() {
     .filter(({ match }) => match)
     .map(({ match, message }) => ({ item: items[Number(match[1])], message }))
     .filter(({ item }) => item)
+
+  const totals = pricing ?? { subtotal, delivery_fee: deliveryFee, total: estimatedTotal, discount_total: 0, total_savings: 0 }
 
   return (
     <>
@@ -63,8 +71,9 @@ export default function CheckoutPage() {
 
       <form className="two-column" onSubmit={handleSubmit} noValidate>
         <div className="stack">
-          <ErrorMessage error={form.formError} />
+          <ErrorMessage error={form.formError ?? pricingError} />
           {form.fieldError('items') && <div className="alert alert-error">{form.fieldError('items')}</div>}
+          {form.fieldError('promo_code') && <div className="alert alert-error">{form.fieldError('promo_code')}</div>}
           {lineProblems.map(({ item, message }) => (
             <div key={item.productId} className="alert alert-error">
               <span>{message}</span>
@@ -106,18 +115,32 @@ export default function CheckoutPage() {
         <aside className="card sticky-card">
           <h2>Your order</h2>
           <ul className="checkout-lines">
-            {items.map((item) => (
-              <li key={item.productId}>
-                <span>
-                  <strong>{item.quantity}×</strong> {item.name}
-                </span>
-                <span>{money(item.price * item.quantity)}</span>
-              </li>
-            ))}
+            {items.map((item) => {
+              const priced = pricing?.lines.find((line) => line.product_id === item.productId)
+              const unitPrice = priced?.unit_price ?? item.price
+              return (
+                <li key={item.productId}>
+                  <span>
+                    <strong>{item.quantity}×</strong> {item.name}
+                  </span>
+                  <span>{money(unitPrice * item.quantity)}</span>
+                </li>
+              )
+            })}
           </ul>
-          <OrderSummary subtotal={subtotal} deliveryFee={deliveryFee} total={estimatedTotal} estimated>
-            <button type="submit" className="btn btn-primary btn-block" disabled={form.submitting}>
-              {form.submitting ? 'Placing order…' : 'Place order'}
+
+          <PromoCodeField applied={pricing?.promo_code} error={promoError} loading={pricingLoading} />
+
+          <OrderSummary
+            subtotal={totals.subtotal}
+            deliveryFee={totals.delivery_fee}
+            discountTotal={totals.discount_total}
+            promoCode={pricing?.promo_code?.code}
+            total={totals.total}
+            savings={totals.total_savings}
+          >
+            <button type="submit" className="btn btn-primary btn-block" disabled={form.submitting || pricingLoading}>
+              {form.submitting ? 'Placing order…' : `Place order · ${money(totals.total)}`}
             </button>
           </OrderSummary>
         </aside>

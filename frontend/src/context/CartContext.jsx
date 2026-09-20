@@ -1,8 +1,9 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useReducer } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState } from 'react'
 import { sumMoney } from '../utils/format'
 import { useShop } from './ShopContext'
 
-const STORAGE_KEY = 'foodapp.cart'
+const STORAGE_KEY = 'leueats.cart'
+const PROMO_STORAGE_KEY = 'leueats.promo'
 
 /*
  * The cart is purely client-side (React state persisted to localStorage).
@@ -19,6 +20,14 @@ function loadCart() {
     return Array.isArray(parsed) ? parsed : []
   } catch {
     return []
+  }
+}
+
+function loadPromoCode() {
+  try {
+    return localStorage.getItem(PROMO_STORAGE_KEY) || null
+  } catch {
+    return null
   }
 }
 
@@ -42,7 +51,10 @@ function cartReducer(items, action) {
           productId: product.id,
           slug: product.slug,
           name: product.name,
-          price: product.price,
+          // The price on offer right now, so the local estimate shown before the
+          // server prices the cart matches what will actually be charged.
+          price: product.effective_price ?? product.price,
+          listPrice: product.price,
           imageUrl: product.image_url,
           quantity: clamp(quantity, max),
         },
@@ -73,14 +85,20 @@ const CartContext = createContext(null)
 export function CartProvider({ children }) {
   const { max_item_quantity: max, delivery_fee: deliveryFee } = useShop()
   const [items, dispatch] = useReducer(cartReducer, undefined, loadCart)
+  const [promoCode, setPromoCodeState] = useState(loadPromoCode)
 
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
+      if (promoCode) {
+        localStorage.setItem(PROMO_STORAGE_KEY, promoCode)
+      } else {
+        localStorage.removeItem(PROMO_STORAGE_KEY)
+      }
     } catch {
       /* storage unavailable: cart lasts until reload */
     }
-  }, [items])
+  }, [items, promoCode])
 
   const addItem = useCallback((product, quantity = 1) => dispatch({ type: 'add', product, quantity, max }), [max])
   const setQuantity = useCallback(
@@ -88,23 +106,37 @@ export function CartProvider({ children }) {
     [max],
   )
   const removeItem = useCallback((productId) => dispatch({ type: 'remove', productId }), [])
-  const clearCart = useCallback(() => dispatch({ type: 'clear' }), [])
+
+  const clearCart = useCallback(() => {
+    dispatch({ type: 'clear' })
+    setPromoCodeState(null)
+  }, [])
+
+  // Codes are entered on the cart page or at checkout; keeping the applied one
+  // here means moving between the two doesn't lose it.
+  const setPromoCode = useCallback((code) => {
+    setPromoCodeState(code ? code.trim().toUpperCase() : null)
+  }, [])
 
   const value = useMemo(() => {
     const subtotal = sumMoney(items)
     return {
       items,
       itemCount: items.reduce((count, item) => count + item.quantity, 0),
+      // Local estimate for the cart badge and line rows; the authoritative
+      // totals come from the server via useCartPricing.
       subtotal,
       deliveryFee: items.length ? deliveryFee : 0,
       estimatedTotal: items.length ? sumMoney([{ price: subtotal, quantity: 1 }, { price: deliveryFee, quantity: 1 }]) : 0,
       maxQuantity: max,
+      promoCode,
+      setPromoCode,
       addItem,
       setQuantity,
       removeItem,
       clearCart,
     }
-  }, [items, deliveryFee, max, addItem, setQuantity, removeItem, clearCart])
+  }, [items, promoCode, deliveryFee, max, setPromoCode, addItem, setQuantity, removeItem, clearCart])
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
 }

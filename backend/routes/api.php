@@ -43,7 +43,7 @@ Route::prefix('v1')->group(function () {
 
     // Prices a cart (offers + promo code) without creating an order. Throttled:
     // it is also the only endpoint that tells you whether a code is valid.
-    Route::post('cart/preview', [CartController::class, 'preview'])->middleware('throttle:60,1');
+    Route::post('cart/preview', [CartController::class, 'preview'])->middleware('throttle:120,1');
 
     // ---- Signed-in users --------------------------------------------------
     Route::middleware('auth:sanctum')->group(function () {

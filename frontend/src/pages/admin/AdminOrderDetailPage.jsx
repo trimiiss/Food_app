@@ -77,7 +77,10 @@ export default function AdminOrderDetailPage() {
                         {item.product_name}
                         {item.product_id === null && <div className="muted small">Product since removed from the menu</div>}
                       </td>
-                      <td className="num">{money(item.unit_price)}</td>
+                      <td className="num">
+                        {money(item.unit_price)}
+                        {item.original_unit_price && <s className="price-was"> {money(item.original_unit_price)}</s>}
+                      </td>
                       <td className="num">{item.quantity}</td>
                       <td className="num">{money(item.line_total)}</td>
                     </tr>
@@ -85,7 +88,13 @@ export default function AdminOrderDetailPage() {
                 </tbody>
               </table>
             </div>
-            <OrderSummary subtotal={order.subtotal} deliveryFee={order.delivery_fee} total={order.total} />
+            <OrderSummary
+              subtotal={order.subtotal}
+              deliveryFee={order.delivery_fee}
+              discountTotal={order.discount_total}
+              promoCode={order.promo_code}
+              total={order.total}
+            />
           </section>
 
           <section className="card">

@@ -99,7 +99,11 @@ export default function OrderDetailPage() {
                   {order.items.map((item) => (
                     <tr key={item.id}>
                       <td>{item.product_name}</td>
-                      <td className="num">{money(item.unit_price)}</td>
+                      <td className="num">
+                        {money(item.unit_price)}
+                        {/* Bought on offer: show what it normally costs. */}
+                        {item.original_unit_price && <s className="price-was"> {money(item.original_unit_price)}</s>}
+                      </td>
                       <td className="num">{item.quantity}</td>
                       <td className="num">{money(item.line_total)}</td>
                     </tr>
@@ -128,7 +132,13 @@ export default function OrderDetailPage() {
 
         <aside className="card sticky-card">
           <h2>Summary</h2>
-          <OrderSummary subtotal={order.subtotal} deliveryFee={order.delivery_fee} total={order.total}>
+          <OrderSummary
+            subtotal={order.subtotal}
+            deliveryFee={order.delivery_fee}
+            discountTotal={order.discount_total}
+            promoCode={order.promo_code}
+            total={order.total}
+          >
             <ErrorMessage error={actionError} />
             {order.can_cancel && (
               <button type="button" className="btn btn-danger btn-block" onClick={handleCancel} disabled={cancelling}>
