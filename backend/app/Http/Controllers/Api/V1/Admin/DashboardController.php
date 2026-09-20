@@ -8,6 +8,7 @@ use App\Http\Resources\OrderResource;
 use App\Models\Category;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\PromoCode;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -37,6 +38,8 @@ class DashboardController extends Controller
                 'products_count' => Product::count(),
                 'available_products_count' => Product::query()->available()->count(),
                 'categories_count' => Category::count(),
+                'products_on_offer_count' => Product::query()->onOffer()->count(),
+                'active_promo_codes_count' => PromoCode::query()->publiclyListed()->count(),
                 'orders_count' => $ordersByStatus->sum('count'),
                 'open_orders_count' => $ordersByStatus->where('is_final', false)->sum('count'),
                 'orders_by_status' => $ordersByStatus->values(),

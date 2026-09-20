@@ -67,6 +67,7 @@ Route::prefix('v1')->group(function () {
 
             Route::apiResource('categories', Admin\CategoryController::class);
             Route::apiResource('products', Admin\ProductController::class);
+            Route::apiResource('promo-codes', Admin\PromoCodeController::class);
 
             Route::get('orders', [Admin\OrderController::class, 'index'])->name('orders.index');
             Route::get('orders/{order}', [Admin\OrderController::class, 'show'])->name('orders.show');

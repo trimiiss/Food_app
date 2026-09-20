@@ -28,6 +28,16 @@ class PromoCode extends Model
     use HasFactory;
 
     /**
+     * The database default only applies to the stored row; without this the
+     * model returned straight after create() would report uses_count as null.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'uses_count' => 0,
+    ];
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array
