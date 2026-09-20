@@ -30,6 +30,15 @@ export function formatDate(isoString) {
   return isoString ? dateFormatter.format(new Date(isoString)) : ''
 }
 
+const dayMonthFormatter = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' })
+
+/** "20 Sep" — for chart axes and daily rows, where the year is noise. */
+export function formatDayMonth(isoDate) {
+  // A bare "YYYY-MM-DD" is parsed as UTC; adding the time keeps it local, so a
+  // day never renders as the one before it.
+  return isoDate ? dayMonthFormatter.format(new Date(`${isoDate}T00:00:00`)) : ''
+}
+
 /** "1 product" / "3 products" */
 export function pluralize(count, singular, plural = `${singular}s`) {
   return `${count} ${count === 1 ? singular : plural}`

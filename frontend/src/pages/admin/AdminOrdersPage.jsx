@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { getAdminOrders } from '../../api/admin'
+import { downloadOrdersCsv, getAdminOrders } from '../../api/admin'
 import { EmptyState, ErrorMessage, Loader } from '../../components/Feedback'
-import { StatusBadge } from '../../components/OrderStatus'
+import { FulfillmentBadge, StatusBadge } from '../../components/OrderStatus'
 import Pagination from '../../components/Pagination'
 import StatusActions from '../../components/StatusActions'
 import { useShop } from '../../context/ShopContext'
@@ -13,13 +13,25 @@ export default function AdminOrdersPage() {
   const { money } = useShop()
   const [searchParams, setSearchParams] = useSearchParams()
   const status = searchParams.get('status') ?? ''
+  const fulfillment = searchParams.get('fulfillment_type') ?? ''
   const search = searchParams.get('search') ?? ''
   const page = Number(searchParams.get('page') ?? 1)
   const [flash, setFlash] = useState(null)
+  const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState(null)
 
   const orders = useApi(
-    (options) => getAdminOrders({ status: status || undefined, search: search || undefined, page }, options),
-    [status, search, page],
+    (options) =>
+      getAdminOrders(
+        {
+          status: status || undefined,
+          fulfillment_type: fulfillment || undefined,
+          search: search || undefined,
+          page,
+        },
+        options,
+      ),
+    [status, fulfillment, search, page],
   )
 
   const [searchInput, setSearchInput] = useState(search)
@@ -38,6 +50,22 @@ export default function AdminOrdersPage() {
     setSearchParams(next)
   }
 
+  const handleExport = async () => {
+    setExporting(true)
+    setExportError(null)
+    try {
+      await downloadOrdersCsv({
+        status: status || undefined,
+        fulfillment_type: fulfillment || undefined,
+        search: search || undefined,
+      })
+    } catch (caught) {
+      setExportError(caught)
+    } finally {
+      setExporting(false)
+    }
+  }
+
   // Swap the updated order into the current page without refetching the list.
   const handleUpdated = (updated) => {
     setFlash(`${updated.order_number} is now “${updated.status_label}”.`)
@@ -54,12 +82,19 @@ export default function AdminOrdersPage() {
           <h1>Orders</h1>
           <p>{orders.data ? pluralize(orders.data.meta.total, 'order') : 'Track and update every order'}</p>
         </div>
-        <button type="button" className="btn btn-sm btn-secondary" onClick={orders.reload} disabled={orders.loading}>
-          {orders.loading ? 'Refreshing…' : 'Refresh'}
-        </button>
+        <div className="row">
+          {/* Exports exactly what the filters above are showing. */}
+          <button type="button" className="btn btn-sm btn-secondary" onClick={handleExport} disabled={exporting}>
+            {exporting ? 'Preparing…' : '⬇ Export CSV'}
+          </button>
+          <button type="button" className="btn btn-sm btn-secondary" onClick={orders.reload} disabled={orders.loading}>
+            {orders.loading ? 'Refreshing…' : 'Refresh'}
+          </button>
+        </div>
       </div>
 
       {flash && <div className="alert alert-success">{flash}</div>}
+      <ErrorMessage error={exportError} />
 
       <div className="toolbar">
         <label className="toolbar-search">
@@ -84,6 +119,21 @@ export default function AdminOrdersPage() {
             ))}
           </select>
         </label>
+        <label>
+          <span className="visually-hidden">Filter by delivery or pickup</span>
+          <select
+            className="input"
+            value={fulfillment}
+            onChange={(event) => updateParams({ fulfillment_type: event.target.value })}
+          >
+            <option value="">Delivery &amp; pickup</option>
+            {orders.data?.fulfillment_types?.map((item) => (
+              <option key={item.value} value={item.value}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       {orders.error && !orders.data ? (
@@ -92,7 +142,11 @@ export default function AdminOrdersPage() {
         <Loader label="Loading orders…" />
       ) : orders.data.data.length === 0 ? (
         <EmptyState icon="🧾" title="No orders found">
-          <p>{status || search ? 'Try a different status or search.' : 'Orders will appear here as customers check out.'}</p>
+          <p>
+            {status || search || fulfillment
+              ? 'Try a different filter or search.'
+              : 'Orders will appear here as customers check out.'}
+          </p>
         </EmptyState>
       ) : (
         <>
@@ -116,6 +170,9 @@ export default function AdminOrdersPage() {
                       <Link to={`/admin/orders/${order.id}`} className="order-number">
                         {order.order_number}
                       </Link>
+                      <div className="mt-xs">
+                        <FulfillmentBadge type={order.fulfillment_type} label={order.fulfillment_label} />
+                      </div>
                     </td>
                     <td>
                       {order.customer?.name}

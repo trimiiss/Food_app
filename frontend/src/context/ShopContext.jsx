@@ -3,7 +3,19 @@ import { getShopSettings } from '../api/catalog'
 import { formatMoney, formatMoneyShort } from '../utils/format'
 
 // Used until /shop responds (and if it fails) so prices still render.
-const DEFAULT_SETTINGS = { currency: 'EUR', delivery_fee: 0, max_item_quantity: 50 }
+const DEFAULT_SETTINGS = {
+  currency: 'EUR',
+  delivery_fee: 0,
+  max_item_quantity: 50,
+  // Delivery/pickup come from the API's FulfillmentType enum; this fallback
+  // keeps the choice on screen if /shop is unreachable.
+  fulfillment_types: [
+    { value: 'delivery', label: 'Delivery' },
+    { value: 'pickup', label: 'Pickup' },
+  ],
+  pickup_address: null,
+  pickup_ready_in_minutes: 20,
+}
 
 const ShopContext = createContext(null)
 

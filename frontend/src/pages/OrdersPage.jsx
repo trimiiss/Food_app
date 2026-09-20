@@ -1,7 +1,7 @@
 import { Link, useSearchParams } from 'react-router'
 import { getMyOrders } from '../api/orders'
 import { EmptyState, ErrorMessage, Loader } from '../components/Feedback'
-import { StatusBadge } from '../components/OrderStatus'
+import { FulfillmentBadge, StatusBadge } from '../components/OrderStatus'
 import Pagination from '../components/Pagination'
 import { useShop } from '../context/ShopContext'
 import { useApi } from '../hooks/useApi'
@@ -50,6 +50,7 @@ export default function OrdersPage() {
                 </span>
               </div>
               <div className="order-row-side">
+                <FulfillmentBadge type={order.fulfillment_type} label={order.fulfillment_label} />
                 <StatusBadge status={order.status} label={order.status_label} />
                 <span className="price">{money(order.total)}</span>
               </div>

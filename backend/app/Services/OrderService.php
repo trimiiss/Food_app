@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\FulfillmentType;
 use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Models\PromoCode;
@@ -30,7 +31,8 @@ class OrderService
      *
      * @param  array{
      *     items: list<array{product_id: int, quantity: int}>,
-     *     delivery_address: string,
+     *     fulfillment_type?: string|null,
+     *     delivery_address?: string|null,
      *     contact_phone: string,
      *     notes?: string|null,
      *     promo_code?: string|null
@@ -38,11 +40,15 @@ class OrderService
      */
     public function place(User $user, array $data): Order
     {
-        $cart = $this->pricer->price($data['items'], $data['promo_code'] ?? null);
+        // Pickup or delivery decides both the fee and whether an address is kept.
+        $fulfillment = FulfillmentType::tryFrom((string) ($data['fulfillment_type'] ?? ''))
+            ?? FulfillmentType::Delivery;
+
+        $cart = $this->pricer->price($data['items'], $data['promo_code'] ?? null, $fulfillment);
 
         // All-or-nothing: an order without its items, or a redemption counted
         // for an order that was never created, must never happen.
-        return DB::transaction(function () use ($user, $data, $cart) {
+        return DB::transaction(function () use ($user, $data, $cart, $fulfillment) {
             if ($cart->promoCode) {
                 $this->redeem($cart->promoCode);
             }
@@ -51,12 +57,15 @@ class OrderService
                 'user_id' => $user->id,
                 'order_number' => Order::generateOrderNumber(),
                 'status' => OrderStatus::Pending,
+                'fulfillment_type' => $fulfillment,
                 'subtotal' => Money::fromCents($cart->subtotalCents),
                 'delivery_fee' => Money::fromCents($cart->deliveryFeeCents),
                 'promo_code' => $cart->promoCode?->code,
                 'discount_total' => Money::fromCents($cart->discountCents),
                 'total' => Money::fromCents($cart->totalCents()),
-                'delivery_address' => $data['delivery_address'],
+                'delivery_address' => $fulfillment->needsDeliveryAddress()
+                    ? $data['delivery_address']
+                    : null,
                 'contact_phone' => $data['contact_phone'],
                 'notes' => $data['notes'] ?? null,
             ]);

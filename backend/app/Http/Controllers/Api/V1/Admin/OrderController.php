@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Admin;
 
+use App\Enums\FulfillmentType;
 use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateOrderStatusRequest;
@@ -20,37 +21,33 @@ class OrderController extends Controller
     public function __construct(private readonly OrderService $orders) {}
 
     /**
-     * GET /admin/orders?status={status}&search={order number, name or email}
+     * GET /admin/orders?status={status}&fulfillment_type={delivery|pickup}&search={order number, name or email}
      */
     public function index(Request $request): AnonymousResourceCollection
     {
         $filters = $request->validate([
             'status' => ['nullable', Rule::enum(OrderStatus::class)],
+            'fulfillment_type' => ['nullable', Rule::enum(FulfillmentType::class)],
             'search' => ['nullable', 'string', 'max:100'],
         ]);
 
         $orders = Order::query()
             ->with('user')
             ->withCount('items')
-            ->when($filters['status'] ?? null, fn ($query, string $status) => $query->where('status', $status))
-            ->when($filters['search'] ?? null, function ($query, string $search) {
-                $query->where(function ($query) use ($search) {
-                    $query->where('order_number', 'like', "%{$search}%")
-                        ->orWhereHas('user', fn ($q) => $q
-                            ->where('name', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%"));
-                });
-            })
+            // Status, delivery/pickup and search live on the model, so the CSV
+            // export applies exactly the same filters.
+            ->filtered($filters)
             ->latest('id')
             ->paginate(15)
             ->withQueryString();
 
         return OrderResource::collection($orders)->additional([
-            // Lets the UI build its status filter from the enum instead of a hardcoded copy.
+            // Lets the UI build its filters from the enums instead of a hardcoded copy.
             'statuses' => array_map(
                 fn (OrderStatus $status) => ['value' => $status->value, 'label' => $status->label()],
                 OrderStatus::cases(),
             ),
+            'fulfillment_types' => FulfillmentType::options(),
         ]);
     }
 

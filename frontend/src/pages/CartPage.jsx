@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import { EmptyState, ErrorMessage } from '../components/Feedback'
+import FulfillmentToggle from '../components/FulfillmentToggle'
 import OrderSummary from '../components/OrderSummary'
 import ProductImage from '../components/ProductImage'
 import PromoCodeField from '../components/PromoCodeField'
@@ -10,8 +11,19 @@ import { useCartPricing } from '../hooks/useCartPricing'
 import { pluralize } from '../utils/format'
 
 export default function CartPage() {
-  const { items, itemCount, subtotal, deliveryFee, estimatedTotal, maxQuantity, setQuantity, removeItem, clearCart } =
-    useCart()
+  const {
+    items,
+    itemCount,
+    subtotal,
+    deliveryFee,
+    estimatedTotal,
+    maxQuantity,
+    fulfillment,
+    setFulfillment,
+    setQuantity,
+    removeItem,
+    clearCart,
+  } = useCart()
   const { money } = useShop()
   // Totals (offers + promo code) are computed by the API, not here.
   const { pricing, promoError, loading, error } = useCartPricing()
@@ -94,6 +106,8 @@ export default function CartPage() {
 
         <aside className="card sticky-card">
           <h2>Order summary</h2>
+          {/* Changing this re-prices the cart server-side (the fee comes off for pickup). */}
+          <FulfillmentToggle value={fulfillment} onChange={setFulfillment} />
           <PromoCodeField applied={pricing?.promo_code} error={promoError} loading={loading} />
           <OrderSummary
             subtotal={totals.subtotal}
@@ -102,6 +116,7 @@ export default function CartPage() {
             promoCode={pricing?.promo_code?.code}
             total={totals.total}
             savings={totals.total_savings}
+            fulfillmentType={pricing?.fulfillment_type ?? fulfillment}
           >
             <Link to="/checkout" className="btn btn-primary btn-block">
               Proceed to checkout

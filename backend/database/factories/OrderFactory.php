@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\FulfillmentType;
 use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Models\User;
@@ -24,6 +25,7 @@ class OrderFactory extends Factory
             'user_id' => User::factory(),
             'order_number' => Order::generateOrderNumber(),
             'status' => OrderStatus::Pending,
+            'fulfillment_type' => FulfillmentType::Delivery,
             'subtotal' => $subtotal,
             'delivery_fee' => $deliveryFee,
             'total' => $subtotal + $deliveryFee,
@@ -37,6 +39,17 @@ class OrderFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => $status,
+        ]);
+    }
+
+    /** Collected in store: no fee, no address. */
+    public function pickup(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'fulfillment_type' => FulfillmentType::Pickup,
+            'delivery_fee' => 0,
+            'total' => $attributes['subtotal'],
+            'delivery_address' => null,
         ]);
     }
 }

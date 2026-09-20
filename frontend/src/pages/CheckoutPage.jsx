@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router'
 import { placeOrder } from '../api/orders'
 import { EmptyState, ErrorMessage } from '../components/Feedback'
 import FormField from '../components/FormField'
+import FulfillmentToggle from '../components/FulfillmentToggle'
 import OrderSummary from '../components/OrderSummary'
 import PromoCodeField from '../components/PromoCodeField'
 import { useAuth } from '../context/AuthContext'
@@ -11,13 +12,25 @@ import { useCartPricing } from '../hooks/useCartPricing'
 import { useForm } from '../hooks/useForm'
 
 /**
- * Turns the client-side cart into a real order. Only product ids, quantities
- * and the promo code are sent; the response carries the server's totals.
+ * Turns the client-side cart into a real order. Only product ids, quantities,
+ * how the order is fulfilled and the promo code are sent; the response carries
+ * the server's totals.
  */
 export default function CheckoutPage() {
   const { user } = useAuth()
-  const { items, subtotal, deliveryFee, estimatedTotal, promoCode, clearCart, removeItem } = useCart()
-  const { money } = useShop()
+  const {
+    items,
+    subtotal,
+    deliveryFee,
+    estimatedTotal,
+    promoCode,
+    fulfillment,
+    setFulfillment,
+    isPickup,
+    clearCart,
+    removeItem,
+  } = useCart()
+  const { money, pickup_address: pickupAddress, pickup_ready_in_minutes: pickupReadyIn } = useShop()
   const navigate = useNavigate()
   const form = useForm({ delivery_address: '', contact_phone: '', notes: '' })
   const { pricing, promoError, loading: pricingLoading, error: pricingError } = useCartPricing()
@@ -36,7 +49,9 @@ export default function CheckoutPage() {
   const handleSubmit = form.submit(async (values) => {
     const order = await placeOrder({
       items: items.map((item) => ({ product_id: item.productId, quantity: item.quantity })),
-      delivery_address: values.delivery_address,
+      fulfillment_type: fulfillment,
+      // A pickup has nowhere to be delivered to; the API stores null either way.
+      delivery_address: isPickup ? null : values.delivery_address,
       contact_phone: values.contact_phone,
       notes: values.notes || null,
       // Only send a code the server just accepted, so a stale bad code can't
@@ -84,24 +99,43 @@ export default function CheckoutPage() {
           ))}
 
           <section className="card">
-            <h2>Delivery details</h2>
+            <h2>{isPickup ? 'Pickup details' : 'Delivery details'}</h2>
             <div className="form">
-              <FormField id="delivery_address" label="Delivery address" error={form.fieldError('delivery_address')}>
-                <textarea
-                  id="delivery_address"
-                  rows={3}
-                  autoComplete="street-address"
-                  placeholder="Street, number, city, postcode"
-                  {...form.bind('delivery_address')}
-                />
-              </FormField>
+              <FulfillmentToggle value={fulfillment} onChange={setFulfillment} />
+
+              {isPickup ? (
+                // Nothing to ask for: we already know where the shop is.
+                <div className="pickup-note">
+                  <span className="pickup-note-icon" aria-hidden="true">
+                    🛍️
+                  </span>
+                  <div>
+                    <strong>Collect from {pickupAddress ?? 'our kitchen'}</strong>
+                    <p className="muted small">
+                      Usually ready about {pickupReadyIn} minutes after we confirm your order. We’ll call when it’s
+                      waiting for you.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <FormField id="delivery_address" label="Delivery address" error={form.fieldError('delivery_address')}>
+                  <textarea
+                    id="delivery_address"
+                    rows={3}
+                    autoComplete="street-address"
+                    placeholder="Street, number, city, postcode"
+                    {...form.bind('delivery_address')}
+                  />
+                </FormField>
+              )}
+
               <FormField
                 id="contact_phone"
                 label="Phone number"
                 type="tel"
                 autoComplete="tel"
                 placeholder="+44 20 7946 0958"
-                hint="The rider will call if they can’t find you."
+                hint={isPickup ? 'We’ll call when your order is ready to collect.' : 'The rider will call if they can’t find you.'}
                 error={form.fieldError('contact_phone')}
                 {...form.bind('contact_phone')}
               />
@@ -138,6 +172,7 @@ export default function CheckoutPage() {
             promoCode={pricing?.promo_code?.code}
             total={totals.total}
             savings={totals.total_savings}
+            fulfillmentType={pricing?.fulfillment_type ?? fulfillment}
           >
             <button type="submit" className="btn btn-primary btn-block" disabled={form.submitting || pricingLoading}>
               {form.submitting ? 'Placing order…' : `Place order · ${money(totals.total)}`}

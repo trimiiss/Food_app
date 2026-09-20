@@ -53,6 +53,23 @@ enum OrderStatus: string
         return $this->allowedTransitions() === [];
     }
 
+    /**
+     * The same state, worded for how the order is being fulfilled: nothing
+     * goes "out for delivery" when the customer is collecting it themselves.
+     */
+    public function labelFor(FulfillmentType $fulfillment): string
+    {
+        if ($fulfillment->chargesDeliveryFee()) {
+            return $this->label();
+        }
+
+        return match ($this) {
+            self::OutForDelivery => 'Ready for pickup',
+            self::Delivered => 'Picked up',
+            default => $this->label(),
+        };
+    }
+
     public function label(): string
     {
         return match ($this) {

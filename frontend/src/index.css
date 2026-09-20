@@ -2183,3 +2183,349 @@ a.stat-card:hover {
 .table .badge {
   white-space: nowrap;
 }
+
+/* ---- Delivery or pickup ----------------------------------------------------- */
+.fulfillment-toggle {
+  border: 0;
+  margin: 0 0 16px;
+  padding: 0;
+}
+
+.fulfillment-toggle legend {
+  padding: 0;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
+.fulfillment-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.fulfillment-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.fulfillment-option:hover {
+  border-color: var(--color-primary);
+}
+
+.fulfillment-option.is-selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+/* The card itself is the control; the radio stays for keyboard and a11y. */
+.fulfillment-option input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.fulfillment-option:has(input:focus-visible) {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.fulfillment-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.fulfillment-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pickup-note {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+}
+
+.pickup-note p {
+  margin: 4px 0 0;
+}
+
+.pickup-note-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.badge-fulfillment {
+  background: var(--color-surface-muted);
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+.badge-fulfillment.badge-pickup {
+  background: var(--color-purple-soft);
+  color: var(--color-purple);
+}
+
+.badge-fulfillment.badge-delivery {
+  background: var(--color-info-soft);
+  color: var(--color-info);
+}
+
+.mt-xs {
+  margin-top: 6px;
+}
+
+@media (max-width: 480px) {
+  .fulfillment-options {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* The emoji is the marker here, so drop the status badge's dot. */
+.badge-fulfillment::before {
+  content: none;
+}
+
+/* ---- Analytics: chart, meter, best sellers ---------------------------------- */
+/*
+ * One hue for the whole page (the brand orange). The delivery/pickup split is a
+ * share of one total — a meter on one ramp — rather than two rival colours:
+ * the app's blue and purple fail colour-blind separation as a pair.
+ */
+.bar-sales {
+  background: var(--color-primary);
+}
+
+.bar-row .bar-count {
+  white-space: nowrap;
+}
+
+.chart {
+  margin: 0;
+}
+
+.chart-plot {
+  position: relative;
+}
+
+.chart-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.chart-grid {
+  stroke: var(--color-border);
+  stroke-width: 1;
+}
+
+.chart-tick {
+  fill: var(--color-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Values ride the marks but wear text colours, never the series hue. */
+.chart-value {
+  fill: var(--color-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.chart-area {
+  fill: var(--color-primary);
+  opacity: 0.1;
+}
+
+.chart-line {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+/* The 2px ring keeps a dot legible where it crosses the line. */
+.chart-dot {
+  fill: var(--color-primary);
+  stroke: var(--color-surface);
+  stroke-width: 2;
+}
+
+.chart-crosshair {
+  stroke: var(--color-muted);
+  stroke-width: 1;
+  opacity: 0.5;
+}
+
+.chart-tooltip {
+  position: absolute;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.chart-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.chart-table {
+  margin-top: 12px;
+  font-size: 0.9rem;
+}
+
+.chart-table summary {
+  cursor: pointer;
+  color: var(--color-muted);
+}
+
+.chart-table .table-wrap {
+  margin-top: 10px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.meter {
+  display: flex;
+  height: 14px;
+  border-radius: 999px;
+  /* The unfilled track is a lighter step of the same ramp. */
+  background: var(--color-primary-soft);
+  overflow: hidden;
+}
+
+.meter-fill {
+  display: block;
+  height: 100%;
+  background: var(--color-primary);
+  /* 2px of surface separates the two shares — a gap, not a border. */
+  box-shadow: 2px 0 0 var(--color-surface);
+}
+
+.split-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 28px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.split-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.meter-key {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  background: var(--color-primary-soft);
+}
+
+.meter-key.is-filled {
+  background: var(--color-primary);
+}
+
+/* ---- Cookie notice ---------------------------------------------------------- */
+/*
+ * Sits at the bottom and never blocks the page: someone can read the menu while
+ * deciding. On a phone it becomes a sheet, with the buttons full width.
+ */
+.cookie-banner {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  z-index: 60;
+  width: min(760px, calc(100% - 32px));
+  padding: 16px 18px;
+  transform: translateX(-50%);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+}
+
+.cookie-banner-inner {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.cookie-banner-text h2 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+.cookie-banner-text p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--color-muted);
+}
+
+.cookie-banner-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.cookie-banner-note {
+  margin: 10px 0 0;
+  font-size: 0.78rem;
+  color: var(--color-muted);
+}
+
+.footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+@media (max-width: 640px) {
+  .cookie-banner-inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cookie-banner-actions {
+    flex-direction: row;
+  }
+
+  .cookie-banner-actions .btn {
+    flex: 1;
+  }
+}

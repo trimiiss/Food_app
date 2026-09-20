@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Catalog\ProductIndexRequest;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
+use App\Support\Sql;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 /**
@@ -26,7 +27,7 @@ class ProductController extends Controller
                 $query->whereHas('category', fn ($q) => $q->where('slug', $slug));
             })
             ->when($request->validated('search'), function ($query, string $search) {
-                $query->where('name', 'like', "%{$search}%");
+                $query->where('name', Sql::likeOperator(), "%{$search}%");
             })
             // ?on_offer=1 powers the storefront's "Deals" view.
             ->when($request->onlyOffers(), fn ($query) => $query->onOffer())

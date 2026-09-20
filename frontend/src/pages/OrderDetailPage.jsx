@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router'
 import { cancelMyOrder, getMyOrder } from '../api/orders'
 import { EmptyState, ErrorMessage, Loader } from '../components/Feedback'
-import { OrderTimeline, StatusBadge } from '../components/OrderStatus'
+import { FulfillmentBadge, OrderTimeline, StatusBadge } from '../components/OrderStatus'
 import OrderSummary from '../components/OrderSummary'
 import { useShop } from '../context/ShopContext'
 import { useApi } from '../hooks/useApi'
@@ -14,7 +14,7 @@ const POLL_INTERVAL_MS = 15000
 export default function OrderDetailPage() {
   const { id } = useParams()
   const location = useLocation()
-  const { money } = useShop()
+  const { money, pickup_address: pickupAddress } = useShop()
   const [cancelling, setCancelling] = useState(false)
   const [actionError, setActionError] = useState(null)
 
@@ -42,6 +42,8 @@ export default function OrderDetailPage() {
   }
 
   if (error && !order) return <ErrorMessage error={error} onRetry={reload} />
+
+  const isPickup = order.fulfillment_type === 'pickup'
 
   const handleCancel = async () => {
     if (!window.confirm('Cancel this order?')) return
@@ -74,11 +76,14 @@ export default function OrderDetailPage() {
           <h1>Order {order.order_number}</h1>
           <p>Placed {formatDateTime(order.created_at)}</p>
         </div>
-        <StatusBadge status={order.status} label={order.status_label} />
+        <div className="row">
+          <FulfillmentBadge type={order.fulfillment_type} label={order.fulfillment_label} />
+          <StatusBadge status={order.status} label={order.status_label} />
+        </div>
       </div>
 
       <section className="card timeline-card">
-        <OrderTimeline status={order.status} />
+        <OrderTimeline status={order.status} fulfillmentType={order.fulfillment_type} />
       </section>
 
       <div className="two-column">
@@ -114,10 +119,11 @@ export default function OrderDetailPage() {
           </section>
 
           <section className="card">
-            <h2>Delivery</h2>
+            <h2>{isPickup ? 'Pickup' : 'Delivery'}</h2>
             <dl className="details">
-              <dt>Address</dt>
-              <dd>{order.delivery_address}</dd>
+              <dt>{isPickup ? 'Collect from' : 'Address'}</dt>
+              {/* A pickup order has no delivery address — the shop's own is shown instead. */}
+              <dd>{isPickup ? (pickupAddress ?? 'Our kitchen') : order.delivery_address}</dd>
               <dt>Phone</dt>
               <dd>{order.contact_phone}</dd>
               {order.notes && (
@@ -138,6 +144,7 @@ export default function OrderDetailPage() {
             discountTotal={order.discount_total}
             promoCode={order.promo_code}
             total={order.total}
+            fulfillmentType={order.fulfillment_type}
           >
             <ErrorMessage error={actionError} />
             {order.can_cancel && (

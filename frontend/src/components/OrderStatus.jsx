@@ -10,15 +10,17 @@ const STEPS = [
   { value: 'pending', label: 'Order placed' },
   { value: 'confirmed', label: 'Confirmed' },
   { value: 'preparing', label: 'Preparing' },
-  { value: 'out_for_delivery', label: 'Out for delivery' },
-  { value: 'delivered', label: 'Delivered' },
+  // An order collected in store never goes out for delivery — the API words
+  // its own labels the same way (OrderStatus::labelFor).
+  { value: 'out_for_delivery', label: 'Out for delivery', pickupLabel: 'Ready for pickup' },
+  { value: 'delivered', label: 'Delivered', pickupLabel: 'Picked up' },
 ]
 
 export function StatusBadge({ status, label }) {
   return <span className={`badge badge-${status}`}>{label}</span>
 }
 
-export function OrderTimeline({ status }) {
+export function OrderTimeline({ status, fulfillmentType = 'delivery' }) {
   if (status === 'cancelled') {
     return (
       <div className="alert alert-error timeline-cancelled">
@@ -27,6 +29,7 @@ export function OrderTimeline({ status }) {
     )
   }
 
+  const isPickup = fulfillmentType === 'pickup'
   const currentIndex = STEPS.findIndex((step) => step.value === status)
 
   return (
@@ -38,10 +41,20 @@ export function OrderTimeline({ status }) {
             <span className="timeline-dot" aria-hidden="true">
               {state === 'done' ? '✓' : index + 1}
             </span>
-            <span className="timeline-label">{step.label}</span>
+            <span className="timeline-label">{(isPickup && step.pickupLabel) || step.label}</span>
           </li>
         )
       })}
     </ol>
+  )
+}
+
+/** Small "🛵 Delivery" / "🛍️ Pickup" marker for order lists and headers. */
+export function FulfillmentBadge({ type, label }) {
+  return (
+    <span className={`badge badge-fulfillment badge-${type}`}>
+      <span aria-hidden="true">{type === 'pickup' ? '🛍️' : '🛵'}</span>
+      {label ?? (type === 'pickup' ? 'Pickup' : 'Delivery')}
+    </span>
   )
 }

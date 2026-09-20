@@ -13,11 +13,28 @@ class CatalogTest extends TestCase
 
     public function test_shop_settings_are_public(): void
     {
-        config(['shop.currency' => 'EUR', 'shop.delivery_fee' => 2.5, 'shop.max_item_quantity' => 50]);
+        config([
+            'shop.currency' => 'EUR',
+            'shop.delivery_fee' => 2.5,
+            'shop.max_item_quantity' => 50,
+            'shop.pickup.address' => 'LeuEats Kitchen',
+            'shop.pickup.ready_in_minutes' => 20,
+        ]);
 
         $this->getJson('/api/v1/shop')
             ->assertOk()
-            ->assertExactJson(['data' => ['currency' => 'EUR', 'delivery_fee' => 2.5, 'max_item_quantity' => 50]]);
+            ->assertExactJson(['data' => [
+                'currency' => 'EUR',
+                'delivery_fee' => 2.5,
+                'max_item_quantity' => 50,
+                // The SPA builds its delivery/pickup choice from this.
+                'fulfillment_types' => [
+                    ['value' => 'delivery', 'label' => 'Delivery'],
+                    ['value' => 'pickup', 'label' => 'Pickup'],
+                ],
+                'pickup_address' => 'LeuEats Kitchen',
+                'pickup_ready_in_minutes' => 20,
+            ]]);
     }
 
     public function test_categories_list_counts_only_available_products(): void

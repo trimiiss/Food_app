@@ -29,7 +29,8 @@ Food_app/
 6. [Running the tests](#running-the-tests)
 7. [API reference](#api-reference)
 8. [Database schema](#database-schema)
-9. [Known limitations](#known-limitations)
+9. [Deploying to Render](#deploying-to-render)
+10. [Known limitations](#known-limitations)
 
 ---
 
@@ -53,11 +54,15 @@ Beyond the brief:
 | ------- | ----- |
 | **Offers** — a discounted price per dish, with an optional end date | Ribbon and struck-through price across the storefront; managed in the admin product form |
 | **Promo codes** — percentage off, amount off or free delivery, each with a minimum order, validity window and usage limit | Entered on the cart or at checkout; managed under **Admin → Promo codes** |
+| **Delivery or pickup** — pickup orders skip the delivery fee and need no address; every status is worded for how the order is fulfilled ("Ready for pickup" instead of "Out for delivery") | Chosen on `/cart` and `/checkout`; filterable under **Admin → Orders** |
 | **Deals page** | `/deals` — public codes (click to copy) and every discounted dish |
 | Customer order cancellation before preparation starts | `/orders/:id` |
 | Dashboard with order, revenue and offer stats | `/admin` |
+| **Analytics** — sales per day, best sellers, promo-code performance, delivery/pickup split, and a CSV export of the orders table | `/admin/analytics` |
+| **Cookie notice** — first-visit banner whose two answers genuinely differ: "Accept" remembers the cart and preferences between visits, "Only what's needed" keeps them until the tab closes | Bottom of the storefront; reopen from the footer |
 
-Seeded demo data: 9 categories, 48 dishes (8 on offer), 5 promo codes and 4 orders. 105 backend tests.
+Seeded demo data: 9 categories, 48 dishes (8 on offer), 5 promo codes and 4 orders (two for
+delivery, two for pickup). 128 backend tests.
 
 ---
 
@@ -278,12 +283,12 @@ Base URL: `http://127.0.0.1:8000/api/v1` · JSON in/out · protected routes need
 | `POST` | `/register` | Create a **customer** account → `{ data: { user, token } }` |
 | `POST` | `/admin/register` | Create an **admin** account; requires `registration_code` |
 | `POST` | `/login` | Log in (customer or admin) → `{ data: { user, token } }` |
-| `GET`  | `/shop` | Storefront settings: `currency`, `delivery_fee`, `max_item_quantity` |
+| `GET`  | `/shop` | Storefront settings: `currency`, `delivery_fee`, `max_item_quantity`, `fulfillment_types`, `pickup_address`, `pickup_ready_in_minutes` |
 | `GET`  | `/categories` | All categories with count of available products |
 | `GET`  | `/products?category={slug}&search={text}&on_offer=1&page={n}&per_page={n}` | Available products (paginated); `on_offer=1` lists only discounted dishes |
 | `GET`  | `/products/{slug}` | One available product |
 | `GET`  | `/promotions` | Publicly advertised promo codes (active, in date, not exhausted) |
-| `POST` | `/cart/preview` | Prices a cart (offers + promo code) without creating an order |
+| `POST` | `/cart/preview` | Prices a cart (offers, delivery/pickup, promo code) without creating an order |
 
 Auth endpoints are rate-limited to 10 requests/minute.
 
@@ -302,25 +307,33 @@ Auth endpoints are rate-limited to 10 requests/minute.
 // POST /api/v1/orders — prices are never sent; the server computes them
 {
   "items": [{ "product_id": 1, "quantity": 2 }, { "product_id": 7, "quantity": 1 }],
-  "delivery_address": "221B Baker Street, London",
+  "fulfillment_type": "delivery",             // or "pickup"; defaults to "delivery"
+  "delivery_address": "221B Baker Street, London",  // required for delivery, ignored for pickup
   "contact_phone": "+44 20 7946 0958",
   "notes": "Ring the bell",
   "promo_code": "WELCOME10"
 }
 ```
 
+**Pickup orders** (`"fulfillment_type": "pickup"`) are never charged the delivery
+fee, store no `delivery_address`, and reject a `free_delivery` promo code — there is
+no fee to waive. `/cart/preview` takes the same field, so the cart shows the right
+total before checkout.
+
 ### Admin only (`auth:sanctum` + `admin`)
 
 | Method | Endpoint | Description |
 | ------ | -------- | ----------- |
 | `GET` | `/admin/stats` | Dashboard numbers, orders by status, recent orders |
+| `GET` | `/admin/analytics?days={7\|30\|90\|365}` | Totals, sales per day, best sellers, promo-code performance, delivery/pickup split |
 | `GET` · `POST` | `/admin/categories` | List (with product counts) · create |
 | `GET` · `PUT` · `DELETE` | `/admin/categories/{id}` | Show · update · delete (`409` if it has products) |
 | `GET` · `POST` | `/admin/products?category=&search=&page=` | List **all** products (incl. unavailable) · create |
 | `GET` · `PUT` · `DELETE` | `/admin/products/{id}` | Show · update · delete |
 | `GET` · `POST` | `/admin/promo-codes` | List (+ the type list for the UI) · create |
 | `GET` · `PUT` · `DELETE` | `/admin/promo-codes/{id}` | Show · update · delete |
-| `GET` | `/admin/orders?status=&search=&page=` | All orders (search: order number, customer name/email) + `statuses` list |
+| `GET` | `/admin/orders?status=&fulfillment_type=&search=&page=` | All orders (search: order number, customer name/email) + `statuses` and `fulfillment_types` lists |
+| `GET` | `/admin/orders/export?status=&fulfillment_type=&search=` | The same rows as a streamed CSV download |
 | `GET` | `/admin/orders/{id}` | Order with items and customer |
 | `PATCH` | `/admin/orders/{id}/status` | `{ "status": "preparing" }` — must be an allowed transition |
 
@@ -363,9 +376,10 @@ products        id, category_id → categories (RESTRICT), name, slug (unique), 
 promo_codes     id, code (unique), description?, type [percent|fixed|free_delivery], value,
                 min_subtotal, starts_at?, ends_at?, max_uses?, uses_count,
                 is_active, is_public, timestamps
-orders          id, user_id → users (RESTRICT), order_number (unique), status, subtotal,
-                delivery_fee, promo_code?, discount_total, total, delivery_address,
-                contact_phone, notes?, timestamps
+orders          id, user_id → users (RESTRICT), order_number (unique), status,
+                fulfillment_type ['delivery'|'pickup'], subtotal, delivery_fee,
+                promo_code?, discount_total, total, delivery_address?, contact_phone,
+                notes?, timestamps
 order_items     id, order_id → orders (CASCADE), product_id → products (SET NULL),
                 product_name, unit_price, original_unit_price?, quantity, line_total, timestamps
 personal_access_tokens   (Sanctum)
@@ -374,9 +388,61 @@ personal_access_tokens   (Sanctum)
 Relationships: `Category hasMany Product` · `User hasMany Order` · `Order hasMany OrderItem` ·
 `OrderItem belongsTo Product` (nullable).
 
+`delivery_address` is null on a pickup order, whose `delivery_fee` is always `0.00`.
+
 Order totals: `total = subtotal + delivery_fee - discount_total`. An order stores the promo code as a
 string, so deleting the code later never rewrites what a customer was charged, and `order_items`
 keeps `original_unit_price` when a line was bought on offer.
+
+---
+
+## Deploying to Render
+
+[`render.yaml`](render.yaml) is a Blueprint that creates all three pieces from this
+repository:
+
+| Service | What it is | Built from |
+| ------- | ---------- | ---------- |
+| `leueats-db` | Managed PostgreSQL | — |
+| `leueats-api` | The Laravel API (Apache + mod_php) | [`backend/Dockerfile`](backend/Dockerfile) |
+| `leueats-web` | The React SPA as a static site | `npm ci && npm run build` → `frontend/dist` |
+
+### Steps
+
+1. Push this repository to GitHub, then in Render: **New → Blueprint** and point it at
+   the repo. Render reads `render.yaml` and shows the three services.
+2. Fill in the values it asks for (everything marked `sync: false`):
+
+   | Variable | Service | Value |
+   | -------- | ------- | ----- |
+   | `APP_KEY` | api | Output of `php artisan key:generate --show`, including the `base64:` prefix |
+   | `APP_URL` | api | `https://leueats-api.onrender.com` |
+   | `FRONTEND_URL` | api | `https://leueats-web.onrender.com` — this is what CORS allows |
+   | `ADMIN_REGISTRATION_CODE` | api | Any secret, or blank to disable admin sign-up |
+   | `VITE_API_URL` | web | `https://leueats-api.onrender.com/api/v1` (note the suffix) |
+
+   The API's and the SPA's URLs are only known once Render has named the services, so
+   the two of them refer to each other. If you rename a service, update both.
+3. Apply the blueprint. On every deploy the container runs `php artisan migrate --force`,
+   then caches config and routes and starts Apache on Render's `$PORT`.
+4. To load the demo catalogue and orders, set `SEED_ON_DEPLOY=true` on the API service
+   for one deploy, then set it back to `false`. The seeders are idempotent, but leave it
+   off once there are real orders.
+
+### Notes
+
+- **PostgreSQL, not MySQL.** Render's managed database is Postgres, so the deployed app
+  runs on a third database engine. The two places the dialects disagree — case-insensitive
+  `LIKE` and grouping a timestamp by day — live in [`app/Support/Sql.php`](backend/app/Support/Sql.php).
+  Everything else is plain Eloquent and migrations.
+- **Free tier.** A free web service sleeps after ~15 minutes of inactivity, so the first
+  request after a quiet spell takes up to a minute. A free database expires after 30 days.
+- **Verified locally** the same way Render builds it:
+  ```bash
+  docker build -t leueats-api backend
+  docker run --rm -p 8099:10000 -e PORT=10000 -e APP_KEY=base64:… \
+    -e DB_CONNECTION=pgsql -e DB_URL=postgres://user:pass@host:5432/db leueats-api
+  ```
 
 ---
 
@@ -386,10 +452,21 @@ This is a technical-challenge submission and intentionally **not production-read
 
 - **Payments** — orders are placed without payment.
 - **Stock/inventory** — availability is a manual on/off switch per product.
+- **Pickup slots** — a pickup order shows a shop-wide "ready in ~20 minutes" estimate from
+  `config/shop.php`; customers can't choose a collection time, and the shop's address is read from
+  configuration rather than snapshotted onto the order.
+- **Analytics** — computed on demand straight from `orders`, with no rollup tables or caching;
+  fine for a demo dataset, not for millions of rows. "Sales" counts every order that wasn't
+  cancelled, while the dashboard's stricter "Revenue" tile counts only delivered ones.
 - **Image uploads** — products use an image URL (seed images are hot-linked from Unsplash; a placeholder
   is shown if one fails to load).
 - **Real-time updates** — order tracking polls every 15 s instead of using WebSockets.
-- **Token storage** — bearer token in `localStorage` (see the Sanctum decision above).
+- **Token storage** — bearer token in `localStorage` (see the Sanctum decision above). The cookie
+  notice treats it as strictly necessary — a visitor who signs in is asking to stay signed in — so
+  it is kept whichever answer they give, and cleared on logout.
+- **Cookie notice** — the app sets no tracking or advertising cookies, so the banner governs only
+  whether the cart, the delivery/pickup choice and an applied promo code survive closing the tab.
+  There is no separate cookie policy page.
 - **Email verification / password reset** — not implemented.
 - **Frontend tests** — the backend has a committed automated suite; the SPA's flows were checked with
   scripted browser runs during development, but no frontend test suite is committed.

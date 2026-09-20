@@ -1,0 +1,105 @@
+# Render Blueprint for LeuEats — https://render.com/docs/blueprint-spec
+#
+# Creates three things from this repository:
+#
+#   leueats-db   PostgreSQL (managed)
+#   leueats-api  the Laravel API, built from backend/Dockerfile
+#   leueats-web  the React SPA, built with Vite and served as a static site
+#
+# Values marked `sync: false` are asked for when the blueprint is applied —
+# they are either secrets or URLs that only exist once the services are named.
+# See the "Deploying to Render" section of README.md for what to paste in.
+
+databases:
+  - name: leueats-db
+    databaseName: leueats
+    user: leueats
+    plan: free
+    region: frankfurt
+
+services:
+  # ---- API ------------------------------------------------------------------
+  - type: web
+    name: leueats-api
+    runtime: docker
+    plan: free
+    region: frankfurt
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    # Public, cheap and touches the database-free config — a good liveness probe.
+    healthCheckPath: /api/v1/shop
+    envVars:
+      # php artisan key:generate --show   (include the "base64:" prefix)
+      - key: APP_KEY
+        sync: false
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      # https://leueats-api.onrender.com
+      - key: APP_URL
+        sync: false
+      # Origin(s) allowed by CORS, e.g. https://leueats-web.onrender.com
+      - key: FRONTEND_URL
+        sync: false
+      - key: DB_CONNECTION
+        value: pgsql
+      # Render injects the full connection string; Laravel parses it (config/database.php).
+      - key: DB_URL
+        fromDatabase:
+          name: leueats-db
+          property: connectionString
+      # Render captures the container's stderr as the service log.
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: warning
+      - key: CACHE_STORE
+        value: database
+      - key: SESSION_DRIVER
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+      # Minutes before an issued API token expires (7 days).
+      - key: SANCTUM_EXPIRATION
+        value: 10080
+      # Required by POST /api/v1/admin/register — leave blank to disable sign-up.
+      - key: ADMIN_REGISTRATION_CODE
+        sync: false
+      - key: SHOP_CURRENCY
+        value: EUR
+      - key: SHOP_DELIVERY_FEE
+        value: 2.50
+      # Shown to customers who choose pickup instead of delivery.
+      - key: SHOP_PICKUP_ADDRESS
+        value: LeuEats Kitchen · Rruga B, 10000 Prishtina
+      - key: SHOP_PICKUP_READY_MINUTES
+        value: 20
+      # Flip to true for one deploy to load the demo catalogue and orders.
+      - key: SEED_ON_DEPLOY
+        value: false
+
+  # ---- SPA ------------------------------------------------------------------
+  - type: web
+    name: leueats-web
+    runtime: static
+    region: frankfurt
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      # https://leueats-api.onrender.com/api/v1  (note the /api/v1 suffix)
+      - key: VITE_API_URL
+        sync: false
+    routes:
+      # Client-side routing: every unknown path serves the SPA shell.
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable

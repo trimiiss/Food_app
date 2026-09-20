@@ -10,6 +10,7 @@ import AdminProductFormPage from './pages/admin/AdminProductFormPage'
 import AdminProductsPage from './pages/admin/AdminProductsPage'
 import AdminPromoCodesPage from './pages/admin/AdminPromoCodesPage'
 import AdminRegisterPage from './pages/admin/AdminRegisterPage'
+import AnalyticsPage from './pages/admin/AnalyticsPage'
 import DashboardPage from './pages/admin/DashboardPage'
 import CartPage from './pages/CartPage'
 import CheckoutPage from './pages/CheckoutPage'
@@ -53,6 +54,7 @@ export default function App() {
       <Route path="admin" element={<RequireAdmin />}>
         <Route element={<AdminLayout />}>
           <Route index element={<DashboardPage />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="orders" element={<AdminOrdersPage />} />
           <Route path="orders/:id" element={<AdminOrderDetailPage />} />
           <Route path="products" element={<AdminProductsPage />} />

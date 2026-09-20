@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Enums\FulfillmentType;
 use App\Models\PromoCode;
 
 /**
@@ -19,6 +20,7 @@ final class PricedCart
         public readonly int $subtotalCents,
         public readonly int $deliveryFeeCents,
         public readonly int $discountCents,
+        public readonly FulfillmentType $fulfillment = FulfillmentType::Delivery,
         public readonly ?PromoCode $promoCode = null,
     ) {}
 
@@ -55,6 +57,8 @@ final class PricedCart
                 'original_unit_price' => $line['original_unit_price'] === null ? null : (float) $line['original_unit_price'],
                 'line_total' => (float) $line['line_total'],
             ], $this->lines),
+            'fulfillment_type' => $this->fulfillment->value,
+            'fulfillment_label' => $this->fulfillment->label(),
             'subtotal' => (float) Money::fromCents($this->subtotalCents),
             'delivery_fee' => (float) Money::fromCents($this->deliveryFeeCents),
             'discount_total' => (float) Money::fromCents($this->discountCents),

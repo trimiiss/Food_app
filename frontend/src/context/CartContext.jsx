@@ -1,22 +1,53 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState } from 'react'
 import { sumMoney } from '../utils/format'
+import { useConsent } from './ConsentContext'
 import { useShop } from './ShopContext'
 
 const STORAGE_KEY = 'leueats.cart'
 const PROMO_STORAGE_KEY = 'leueats.promo'
+const FULFILLMENT_STORAGE_KEY = 'leueats.fulfillment'
+
+export const DELIVERY = 'delivery'
+export const PICKUP = 'pickup'
 
 /*
- * The cart is purely client-side (React state persisted to localStorage).
+ * The cart is purely client-side (React state persisted to the browser).
  *
  * Each line keeps a display snapshot of the product (name, price, image) so the
  * cart renders without extra requests. Those prices are an estimate only: at
  * checkout the API receives just product ids + quantities and re-prices
  * everything from the database.
+ *
+ * Where it is persisted depends on the visitor's cookie choice (ConsentContext):
+ * localStorage if they accepted, sessionStorage if they asked us to forget on
+ * close. Reads look in both, so changing that choice mid-visit doesn't empty a
+ * cart someone is in the middle of filling.
  */
+
+function read(key) {
+  try {
+    return window.localStorage.getItem(key) ?? window.sessionStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function write(kind, key, value) {
+  try {
+    const target = kind === 'local' ? window.localStorage : window.sessionStorage
+    // Never leave a copy behind in the store the visitor didn't choose.
+    const other = kind === 'local' ? window.sessionStorage : window.localStorage
+    other.removeItem(key)
+    if (value === null) target.removeItem(key)
+    else target.setItem(key, value)
+  } catch {
+    /* storage unavailable: the cart lasts until reload */
+  }
+}
 
 function loadCart() {
   try {
-    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]')
+    const parsed = JSON.parse(read(STORAGE_KEY) ?? '[]')
     return Array.isArray(parsed) ? parsed : []
   } catch {
     return []
@@ -24,11 +55,12 @@ function loadCart() {
 }
 
 function loadPromoCode() {
-  try {
-    return localStorage.getItem(PROMO_STORAGE_KEY) || null
-  } catch {
-    return null
-  }
+  return read(PROMO_STORAGE_KEY) || null
+}
+
+/** Delivery or pickup, remembered between visits. Delivery is the default. */
+function loadFulfillment() {
+  return read(FULFILLMENT_STORAGE_KEY) === PICKUP ? PICKUP : DELIVERY
 }
 
 const clamp = (quantity, max) => Math.max(1, Math.min(max, Math.floor(quantity)))
@@ -84,21 +116,17 @@ const CartContext = createContext(null)
 
 export function CartProvider({ children }) {
   const { max_item_quantity: max, delivery_fee: deliveryFee } = useShop()
+  // 'local' or 'session', from what the visitor agreed to keep on their device.
+  const { storage } = useConsent()
   const [items, dispatch] = useReducer(cartReducer, undefined, loadCart)
   const [promoCode, setPromoCodeState] = useState(loadPromoCode)
+  const [fulfillment, setFulfillment] = useState(loadFulfillment)
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
-      if (promoCode) {
-        localStorage.setItem(PROMO_STORAGE_KEY, promoCode)
-      } else {
-        localStorage.removeItem(PROMO_STORAGE_KEY)
-      }
-    } catch {
-      /* storage unavailable: cart lasts until reload */
-    }
-  }, [items, promoCode])
+    write(storage, STORAGE_KEY, JSON.stringify(items))
+    write(storage, FULFILLMENT_STORAGE_KEY, fulfillment)
+    write(storage, PROMO_STORAGE_KEY, promoCode || null)
+  }, [items, promoCode, fulfillment, storage])
 
   const addItem = useCallback((product, quantity = 1) => dispatch({ type: 'add', product, quantity, max }), [max])
   const setQuantity = useCallback(
@@ -120,23 +148,29 @@ export function CartProvider({ children }) {
 
   const value = useMemo(() => {
     const subtotal = sumMoney(items)
+    // Collecting in store costs no delivery fee — the server decides this too,
+    // this is only the estimate shown before /cart/preview answers.
+    const fee = items.length && fulfillment === DELIVERY ? deliveryFee : 0
     return {
       items,
       itemCount: items.reduce((count, item) => count + item.quantity, 0),
       // Local estimate for the cart badge and line rows; the authoritative
       // totals come from the server via useCartPricing.
       subtotal,
-      deliveryFee: items.length ? deliveryFee : 0,
-      estimatedTotal: items.length ? sumMoney([{ price: subtotal, quantity: 1 }, { price: deliveryFee, quantity: 1 }]) : 0,
+      deliveryFee: fee,
+      estimatedTotal: items.length ? sumMoney([{ price: subtotal, quantity: 1 }, { price: fee, quantity: 1 }]) : 0,
       maxQuantity: max,
       promoCode,
       setPromoCode,
+      fulfillment,
+      setFulfillment,
+      isPickup: fulfillment === PICKUP,
       addItem,
       setQuantity,
       removeItem,
       clearCart,
     }
-  }, [items, promoCode, deliveryFee, max, setPromoCode, addItem, setQuantity, removeItem, clearCart])
+  }, [items, promoCode, fulfillment, deliveryFee, max, setPromoCode, addItem, setQuantity, removeItem, clearCart])
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
 }

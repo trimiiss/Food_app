@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { getAdminOrder } from '../../api/admin'
 import { EmptyState, ErrorMessage, Loader } from '../../components/Feedback'
-import { OrderTimeline, StatusBadge } from '../../components/OrderStatus'
+import { FulfillmentBadge, OrderTimeline, StatusBadge } from '../../components/OrderStatus'
 import OrderSummary from '../../components/OrderSummary'
 import StatusActions from '../../components/StatusActions'
 import { useShop } from '../../context/ShopContext'
@@ -29,6 +29,8 @@ export default function AdminOrderDetailPage() {
 
   if (error && !order) return <ErrorMessage error={error} onRetry={reload} />
 
+  const isPickup = order.fulfillment_type === 'pickup'
+
   const handleUpdated = (updated) => {
     setData(updated)
     setFlash(`Status changed to “${updated.status_label}”.`)
@@ -47,13 +49,16 @@ export default function AdminOrderDetailPage() {
             Placed {formatDateTime(order.created_at)} · last updated {formatDateTime(order.updated_at)}
           </p>
         </div>
-        <StatusBadge status={order.status} label={order.status_label} />
+        <div className="row">
+          <FulfillmentBadge type={order.fulfillment_type} label={order.fulfillment_label} />
+          <StatusBadge status={order.status} label={order.status_label} />
+        </div>
       </div>
 
       {flash && <div className="alert alert-success">{flash}</div>}
 
       <section className="card timeline-card">
-        <OrderTimeline status={order.status} />
+        <OrderTimeline status={order.status} fulfillmentType={order.fulfillment_type} />
       </section>
 
       <div className="two-column">
@@ -94,11 +99,12 @@ export default function AdminOrderDetailPage() {
               discountTotal={order.discount_total}
               promoCode={order.promo_code}
               total={order.total}
+              fulfillmentType={order.fulfillment_type}
             />
           </section>
 
           <section className="card">
-            <h2>Customer & delivery</h2>
+            <h2>Customer &amp; {isPickup ? 'pickup' : 'delivery'}</h2>
             <dl className="details">
               <dt>Customer</dt>
               <dd>
@@ -108,8 +114,11 @@ export default function AdminOrderDetailPage() {
               <dd>
                 <a href={`tel:${order.contact_phone}`}>{order.contact_phone}</a>
               </dd>
+              <dt>Fulfilment</dt>
+              <dd>{order.fulfillment_label}</dd>
+              {/* Pickup orders carry no address: the customer comes to us. */}
               <dt>Address</dt>
-              <dd>{order.delivery_address}</dd>
+              <dd>{isPickup ? 'Collected in store' : order.delivery_address}</dd>
               {order.notes && (
                 <>
                   <dt>Notes</dt>

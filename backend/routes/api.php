@@ -64,11 +64,15 @@ Route::prefix('v1')->group(function () {
         ->name('admin.')
         ->group(function () {
             Route::get('stats', Admin\DashboardController::class)->name('stats');
+            // Sales over time, best sellers, promo-code performance.
+            Route::get('analytics', Admin\AnalyticsController::class)->name('analytics');
 
             Route::apiResource('categories', Admin\CategoryController::class);
             Route::apiResource('products', Admin\ProductController::class);
             Route::apiResource('promo-codes', Admin\PromoCodeController::class);
 
+            // Declared before orders/{order}, or "export" would be read as an order id.
+            Route::get('orders/export', Admin\OrderExportController::class)->name('orders.export');
             Route::get('orders', [Admin\OrderController::class, 'index'])->name('orders.index');
             Route::get('orders/{order}', [Admin\OrderController::class, 'show'])->name('orders.show');
             Route::patch('orders/{order}/status', [Admin\OrderController::class, 'updateStatus'])->name('orders.status');

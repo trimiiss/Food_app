@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\ProductRequest;
 use App\Http\Requests\Catalog\ProductIndexRequest;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
+use App\Support\Sql;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
@@ -25,7 +26,7 @@ class ProductController extends Controller
                 $query->whereHas('category', fn ($q) => $q->where('slug', $slug));
             })
             ->when($request->validated('search'), function ($query, string $search) {
-                $query->where('name', 'like', "%{$search}%");
+                $query->where('name', Sql::likeOperator(), "%{$search}%");
             })
             ->latest('id')
             ->paginate($request->perPage())

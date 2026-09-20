@@ -1,3 +1,4 @@
+import { PICKUP } from '../context/CartContext'
 import { useShop } from '../context/ShopContext'
 
 /**
@@ -12,9 +13,11 @@ export default function OrderSummary({
   discountTotal = 0,
   promoCode = null,
   savings = 0,
+  fulfillmentType = 'delivery',
   children,
 }) {
   const { money } = useShop()
+  const isPickup = fulfillmentType === PICKUP
 
   return (
     <div className="summary">
@@ -24,8 +27,9 @@ export default function OrderSummary({
           <dd>{money(subtotal)}</dd>
         </div>
         <div>
-          <dt>Delivery</dt>
-          <dd>{money(deliveryFee)}</dd>
+          <dt>{isPickup ? 'Pickup' : 'Delivery'}</dt>
+          {/* A pickup is never charged a delivery fee. */}
+          <dd>{isPickup ? 'Free' : money(deliveryFee)}</dd>
         </div>
         {discountTotal > 0 && (
           <div className="summary-discount">

@@ -90,16 +90,19 @@ class PromoCode extends Model
     }
 
     /**
-     * Why this code can't be used for a cart of `$subtotalCents`, or null if it can.
-     * Returning the reason (instead of a bare bool) lets the UI explain itself.
+     * Why this code can't be used for a cart of `$subtotalCents` carrying
+     * `$deliveryFeeCents` of delivery, or null if it can. Returning the reason
+     * (instead of a bare bool) lets the UI explain itself.
      */
-    public function rejectionReason(int $subtotalCents): ?string
+    public function rejectionReason(int $subtotalCents, int $deliveryFeeCents = 0): ?string
     {
         return match (true) {
             ! $this->is_active => 'This promo code is no longer active.',
             ! $this->hasStarted() => 'This promo code is not available yet.',
             $this->hasExpired() => 'This promo code has expired.',
             $this->isFullyRedeemed() => 'This promo code has been fully redeemed.',
+            // Nothing to waive: the only order without a delivery fee is a pickup.
+            $this->type === PromoCodeType::FreeDelivery && $deliveryFeeCents === 0 => 'This code only applies to delivery orders.',
             $subtotalCents < Money::toCents($this->min_subtotal) => sprintf(
                 'This code needs a minimum order of %s %s.',
                 config('shop.currency'),

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\FulfillmentType;
 use App\Models\Product;
 use App\Models\PromoCode;
 use App\Support\Money;
@@ -15,7 +16,8 @@ use Illuminate\Validation\ValidationException;
  * This is the only place money is worked out. The checkout and the cart
  * preview endpoint both call it, so what the customer is quoted and what they
  * are charged cannot drift apart. The client never sends prices — only
- * product ids, quantities and an optional code.
+ * product ids, quantities, how they want the order fulfilled and an optional
+ * code.
  */
 class CartPricer
 {
@@ -24,8 +26,11 @@ class CartPricer
      *
      * @throws ValidationException when a product is unavailable or the code can't be used
      */
-    public function price(array $items, ?string $promoCodeInput = null): PricedCart
-    {
+    public function price(
+        array $items,
+        ?string $promoCodeInput = null,
+        FulfillmentType $fulfillment = FulfillmentType::Delivery,
+    ): PricedCart {
         $products = Product::query()
             ->whereIn('id', array_column($items, 'product_id'))
             ->get()
@@ -60,14 +65,19 @@ class CartPricer
             ];
         }
 
-        $deliveryFeeCents = Money::toCents(config('shop.delivery_fee'));
-        $promoCode = $this->resolvePromoCode($promoCodeInput, $subtotalCents);
+        // Collecting in store costs nothing to deliver.
+        $deliveryFeeCents = $fulfillment->chargesDeliveryFee()
+            ? Money::toCents(config('shop.delivery_fee'))
+            : 0;
+
+        $promoCode = $this->resolvePromoCode($promoCodeInput, $subtotalCents, $deliveryFeeCents);
 
         return new PricedCart(
             lines: $lines,
             subtotalCents: $subtotalCents,
             deliveryFeeCents: $deliveryFeeCents,
             discountCents: $promoCode?->discountCentsFor($subtotalCents, $deliveryFeeCents) ?? 0,
+            fulfillment: $fulfillment,
             promoCode: $promoCode,
         );
     }
@@ -75,7 +85,7 @@ class CartPricer
     /**
      * @throws ValidationException
      */
-    private function resolvePromoCode(?string $input, int $subtotalCents): ?PromoCode
+    private function resolvePromoCode(?string $input, int $subtotalCents, int $deliveryFeeCents): ?PromoCode
     {
         if (blank($input)) {
             return null;
@@ -90,7 +100,7 @@ class CartPricer
         }
 
         // The model explains *why* it can't be used, so the UI can say so.
-        if ($reason = $promoCode->rejectionReason($subtotalCents)) {
+        if ($reason = $promoCode->rejectionReason($subtotalCents, $deliveryFeeCents)) {
             throw ValidationException::withMessages(['promo_code' => $reason]);
         }
 
