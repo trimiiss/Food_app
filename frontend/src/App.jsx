@@ -8,6 +8,7 @@ import AdminOrderDetailPage from './pages/admin/AdminOrderDetailPage'
 import AdminOrdersPage from './pages/admin/AdminOrdersPage'
 import AdminProductFormPage from './pages/admin/AdminProductFormPage'
 import AdminProductsPage from './pages/admin/AdminProductsPage'
+import AdminPromoCodesPage from './pages/admin/AdminPromoCodesPage'
 import AdminRegisterPage from './pages/admin/AdminRegisterPage'
 import DashboardPage from './pages/admin/DashboardPage'
 import CartPage from './pages/CartPage'
@@ -59,6 +60,7 @@ export default function App() {
           <Route path="products/new" element={<AdminProductFormPage key="new" />} />
           <Route path="products/:id/edit" element={<AdminProductFormPage key="edit" />} />
           <Route path="categories" element={<AdminCategoriesPage />} />
+          <Route path="promo-codes" element={<AdminPromoCodesPage />} />
         </Route>
       </Route>
     </Routes>

@@ -28,3 +28,10 @@ export const getAdminOrders = (params, options) =>
 export const getAdminOrder = (id, options) => client.get(`/admin/orders/${id}`, options).then((r) => r.data.data)
 export const updateOrderStatus = (id, status) =>
   client.patch(`/admin/orders/${id}/status`, { status }).then((r) => r.data.data)
+
+// ---- Promo codes ---------------------------------------------------------------
+// The list resolves to the whole body: { data, types } — `types` drives the form's picker.
+export const getAdminPromoCodes = (options) => client.get('/admin/promo-codes', options).then((r) => r.data)
+export const createPromoCode = (payload) => client.post('/admin/promo-codes', payload).then((r) => r.data.data)
+export const updatePromoCode = (id, payload) => client.put(`/admin/promo-codes/${id}`, payload).then((r) => r.data.data)
+export const deletePromoCode = (id) => client.delete(`/admin/promo-codes/${id}`)

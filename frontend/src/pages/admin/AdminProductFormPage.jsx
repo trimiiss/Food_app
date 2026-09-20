@@ -12,9 +12,19 @@ const EMPTY_PRODUCT = {
   slug: '',
   category_id: '',
   price: '',
+  discount_price: '',
+  discount_ends_at: '',
   image_url: '',
   description: '',
   is_available: true,
+}
+
+/** ISO timestamp -> the "YYYY-MM-DDTHH:mm" a datetime-local input expects. */
+function toDateTimeInput(iso) {
+  if (!iso) return ''
+  const date = new Date(iso)
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
 /** Create (/admin/products/new) and edit (/admin/products/:id/edit) share this form. */
@@ -36,6 +46,8 @@ export default function AdminProductFormPage() {
       slug: product.data.slug,
       category_id: String(product.data.category_id),
       price: String(product.data.price),
+      discount_price: product.data.discount_price == null ? '' : String(product.data.discount_price),
+      discount_ends_at: toDateTimeInput(product.data.discount_ends_at),
       image_url: product.data.image_url ?? '',
       description: product.data.description ?? '',
       is_available: product.data.is_available,
@@ -67,10 +79,19 @@ export default function AdminProductFormPage() {
     )
   }
 
+  // Mirrors the server's calculation, for a live hint only.
+  const price = Number(form.values.price)
+  const discount = Number(form.values.discount_price)
+  const discountPercentage =
+    price > 0 && discount > 0 && discount < price ? Math.round((1 - discount / price) * 100) : null
+
   const handleSubmit = form.submit(async (values) => {
     const payload = {
       ...values,
       category_id: values.category_id ? Number(values.category_id) : null,
+      // Blank means "no offer"; the API clears the end date with it.
+      discount_price: values.discount_price || null,
+      discount_ends_at: values.discount_price && values.discount_ends_at ? values.discount_ends_at : null,
       slug: values.slug || null, // blank -> derived from the name by the API
       image_url: values.image_url || null,
       description: values.description || null,
@@ -136,6 +157,37 @@ export default function AdminProductFormPage() {
             Available to order
           </label>
           {form.fieldError('is_available') && <span className="field-error">{form.fieldError('is_available')}</span>}
+
+          <fieldset className="offer-fieldset">
+            <legend>Offer</legend>
+            <p className="hint">
+              Set a lower price to put this dish on offer. Leave blank for none; an end date in the past
+              simply stops the offer.
+            </p>
+            <div className="form-grid">
+              <FormField
+                label="Offer price"
+                type="number"
+                inputMode="decimal"
+                min="0.01"
+                step="0.01"
+                placeholder="No offer"
+                error={form.fieldError('discount_price')}
+                {...form.bind('discount_price')}
+              />
+              <FormField
+                label="Offer ends"
+                type="datetime-local"
+                hint="Optional — runs until removed."
+                disabled={!form.values.discount_price}
+                error={form.fieldError('discount_ends_at')}
+                {...form.bind('discount_ends_at')}
+              />
+            </div>
+            {discountPercentage != null && (
+              <p className="offer-preview">Customers will see −{discountPercentage}% on this dish.</p>
+            )}
+          </fieldset>
         </div>
 
         <aside className="card form">

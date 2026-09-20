@@ -48,6 +48,16 @@ export default function DashboardPage() {
           <span className="stat-value">{stats.categories_count}</span>
           <span className="stat-sub">on the menu</span>
         </Link>
+        <Link to="/admin/products" className="stat-card">
+          <span className="stat-label">On offer</span>
+          <span className="stat-value">{stats.products_on_offer_count}</span>
+          <span className="stat-sub">discounted dishes</span>
+        </Link>
+        <Link to="/admin/promo-codes" className="stat-card">
+          <span className="stat-label">Promo codes</span>
+          <span className="stat-value">{stats.active_promo_codes_count}</span>
+          <span className="stat-sub">usable right now</span>
+        </Link>
       </div>
 
       <div className="dashboard-grid">

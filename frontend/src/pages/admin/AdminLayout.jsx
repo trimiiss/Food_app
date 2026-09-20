@@ -6,6 +6,7 @@ const NAV = [
   { to: '/admin/orders', label: 'Orders', icon: '🧾' },
   { to: '/admin/products', label: 'Products', icon: '🍕' },
   { to: '/admin/categories', label: 'Categories', icon: '🗂️' },
+  { to: '/admin/promo-codes', label: 'Promo codes', icon: '🏷️' },
 ]
 
 /** Admin shell: sidebar navigation + content area. */
@@ -22,7 +23,7 @@ export default function AdminLayout() {
     <div className="admin">
       <aside className="admin-sidebar">
         <Link to="/admin" className="brand">
-          <span aria-hidden="true">🍴</span> FoodApp <span className="admin-tag">Admin</span>
+          <span aria-hidden="true">🍴</span> LeuEats <span className="admin-tag">Admin</span>
         </Link>
 
         <nav className="admin-nav" aria-label="Admin">
