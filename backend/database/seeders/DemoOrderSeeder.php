@@ -25,14 +25,15 @@ class DemoOrderSeeder extends Seeder
         }
 
         $demo = [
-            // [status, days ago, [product slug => quantity]]
-            [OrderStatus::Delivered, 6, ['margherita' => 2, 'mint-lemonade' => 2]],
-            [OrderStatus::Delivered, 3, ['double-bacon-smash' => 1, 'chocolate-fudge-brownie' => 1]],
-            [OrderStatus::Preparing, 0, ['spaghetti-carbonara' => 1, 'chicken-caesar-salad' => 1, 'tiramisu' => 2]],
-            [OrderStatus::Pending, 0, ['pepperoni' => 1, 'iced-latte' => 1]],
+            // [status, days ago, [product slug => quantity], promo code]
+            [OrderStatus::Delivered, 6, ['margherita' => 2, 'mint-lemonade' => 2], null],
+            [OrderStatus::Delivered, 3, ['double-bacon-smash' => 1, 'chocolate-fudge-brownie' => 1], null],
+            // Shows a discounted order in the history and on the receipt.
+            [OrderStatus::Preparing, 0, ['spaghetti-carbonara' => 1, 'chicken-caesar-salad' => 1, 'tiramisu' => 2], 'WELCOME10'],
+            [OrderStatus::Pending, 0, ['pepperoni' => 1, 'iced-latte' => 1], null],
         ];
 
-        foreach ($demo as [$status, $daysAgo, $lines]) {
+        foreach ($demo as [$status, $daysAgo, $lines, $promoCode]) {
             $products = Product::whereIn('slug', array_keys($lines))->pluck('id', 'slug');
 
             // Go through the real checkout path so totals and snapshots are
@@ -45,6 +46,7 @@ class DemoOrderSeeder extends Seeder
                 'delivery_address' => '221B Baker Street, London NW1 6XE',
                 'contact_phone' => '+44 20 7946 0958',
                 'notes' => $daysAgo === 0 ? 'Please ring the bell.' : null,
+                'promo_code' => $promoCode,
             ]);
 
             // Seeding shortcut: set the historical status/time directly rather than

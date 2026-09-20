@@ -17,6 +17,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UserSeeder::class,
             CatalogSeeder::class,
+            // Before the demo orders: one of them is placed with a promo code.
+            PromoCodeSeeder::class,
             DemoOrderSeeder::class,
         ]);
     }
