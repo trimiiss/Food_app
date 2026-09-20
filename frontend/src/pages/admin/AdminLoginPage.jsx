@@ -66,7 +66,7 @@ export default function AdminLoginPage() {
 
       <div className="alert alert-info demo-hint">
         <span>
-          Demo admin: <code>admin@foodapp.test</code> / <code>password</code>
+          Demo admin: <code>admin@leueats.test</code> / <code>password</code>
         </span>
       </div>
 

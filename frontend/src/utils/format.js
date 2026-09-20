@@ -7,6 +7,16 @@ export function formatMoney(amount, currency = 'EUR') {
   return moneyFormatters.get(currency).format(Number(amount) || 0)
 }
 
+/** Drops ".00" for headline copy: "€20" rather than "€20.00". */
+export function formatMoneyShort(amount, currency = 'EUR') {
+  const value = Number(amount) || 0
+  return new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: Number.isInteger(value) ? 0 : 2,
+  }).format(value)
+}
+
 const dateTimeFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' })
 
 export function formatDateTime(isoString) {

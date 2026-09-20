@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { getShopSettings } from '../api/catalog'
-import { formatMoney } from '../utils/format'
+import { formatMoney, formatMoneyShort } from '../utils/format'
 
 // Used until /shop responds (and if it fails) so prices still render.
 const DEFAULT_SETTINGS = { currency: 'EUR', delivery_fee: 0, max_item_quantity: 50 }
@@ -25,8 +25,10 @@ export function ShopProvider({ children }) {
   }, [])
 
   const money = useCallback((amount) => formatMoney(amount, settings.currency), [settings.currency])
+  // For headlines, where "€20.00" reads worse than "€20".
+  const moneyShort = useCallback((amount) => formatMoneyShort(amount, settings.currency), [settings.currency])
 
-  const value = useMemo(() => ({ ...settings, money }), [settings, money])
+  const value = useMemo(() => ({ ...settings, money, moneyShort }), [settings, money, moneyShort])
 
   return <ShopContext.Provider value={value}>{children}</ShopContext.Provider>
 }

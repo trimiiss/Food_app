@@ -11,9 +11,9 @@ use Illuminate\Database\Seeder;
  */
 class UserSeeder extends Seeder
 {
-    public const ADMIN_EMAIL = 'admin@foodapp.test';
+    public const ADMIN_EMAIL = 'admin@leueats.test';
 
-    public const CUSTOMER_EMAIL = 'customer@foodapp.test';
+    public const CUSTOMER_EMAIL = 'customer@leueats.test';
 
     public const PASSWORD = 'password';
 

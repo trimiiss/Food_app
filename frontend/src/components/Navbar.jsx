@@ -16,7 +16,7 @@ export default function Navbar() {
     <header className="navbar">
       <div className="container navbar-inner">
         <Link to="/" className="brand">
-          <span aria-hidden="true">🍴</span> FoodApp
+          <span aria-hidden="true">🍴</span> LeuEats
         </Link>
 
         <nav className="nav-links" aria-label="Main">

@@ -51,7 +51,7 @@ export default function LoginPage() {
 
       <div className="alert alert-info demo-hint">
         <span>
-          Demo customer: <code>customer@foodapp.test</code> / <code>password</code>
+          Demo customer: <code>customer@leueats.test</code> / <code>password</code>
         </span>
       </div>
 

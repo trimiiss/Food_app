@@ -1,4 +1,4 @@
-# FoodApp — Food Ordering Application
+# LeuEats — Food Ordering Application
 
 A full-stack food ordering app: customers browse a menu by category, build a cart, check out and
 track their orders; administrators manage products, categories and orders from an admin panel.
@@ -39,7 +39,7 @@ Food_app/
 | - | ----------- | ----- |
 | 1 | Admin registration & login (Sanctum) | `/admin/login`, `/admin/register` (invite code) · also customer `/login`, `/register` |
 | 2 | Public product listing | `/` — all available products, search, pagination |
-| 3 | Product categories | Category chips on `/` (`?category=pizza`), category on every product |
+| 3 | Product categories | Category sidebar on `/` (`?category=pizza`), category on every product |
 | 4 | Add to cart | Product cards and `/products/:slug` (with quantity) |
 | 5 | Change quantity / remove from cart | `/cart` — stepper, typed quantity, remove, clear |
 | 6 | Place an order | `/checkout` → `POST /api/v1/orders` (server re-prices the cart) |
@@ -47,8 +47,17 @@ Food_app/
 | 8 | Order status tracking | State machine `pending → confirmed → preparing → out_for_delivery → delivered` (or `cancelled`); live timeline on `/orders/:id` |
 | 9 | Admin panel | `/admin` dashboard · products CRUD · categories CRUD · all orders with status updates |
 
-Also included: seeded demo data (6 categories, 24 products, 4 orders), 69 backend tests, customer
-order cancellation (before preparation starts), and a dashboard with order/revenue stats.
+Beyond the brief:
+
+| Feature | Where |
+| ------- | ----- |
+| **Offers** — a discounted price per dish, with an optional end date | Ribbon and struck-through price across the storefront; managed in the admin product form |
+| **Promo codes** — percentage off, amount off or free delivery, each with a minimum order, validity window and usage limit | Entered on the cart or at checkout; managed under **Admin → Promo codes** |
+| **Deals page** | `/deals` — public codes (click to copy) and every discounted dish |
+| Customer order cancellation before preparation starts | `/orders/:id` |
+| Dashboard with order, revenue and offer stats | `/admin` |
+
+Seeded demo data: 9 categories, 48 dishes (8 on offer), 5 promo codes and 4 orders. 105 backend tests.
 
 ---
 
@@ -94,7 +103,19 @@ loop (artisan, Vite HMR) stays fast.
   server reloads products, re-checks availability, and computes totals in **integer cents** (no float
   drift), inside a DB transaction.
 - **Order items snapshot `product_name` and `unit_price`.** Editing or deleting a product later never
-  changes what a customer was charged (`product_id` is `SET NULL` on delete).
+  changes what a customer was charged (`product_id` is `SET NULL` on delete). A line bought on offer
+  also keeps `original_unit_price`, so an old receipt can still show "was EUR 12.00".
+- **Offers live on the product** (`discount_price` + optional `discount_ends_at`) rather than in a
+  separate offers table: a dish has at most one running offer, and an expired end date stops applying
+  on its own. `effectivePrice()` is what checkout charges, so an offer is real money off.
+- **`CartPricer` is the only place money is worked out.** Checkout and `POST /cart/preview` both call
+  it, so the total quoted in the cart and the total charged cannot drift apart.
+- **Promo codes** come in three types (percentage, fixed amount, free delivery), each with a minimum
+  order, validity window and redemption limit. The model returns *why* a code was refused ("expired",
+  "fully redeemed", "needs a minimum order of EUR 30.00") so the UI can explain rather than just fail.
+  Discounts are capped at the subtotal — a code can never produce a negative total — and redemptions
+  are counted inside the checkout transaction under a row lock, so the last available use can't be
+  handed to two customers.
 - **Deleting a category that still has products is refused** (`409` with an explanation) rather than
   cascading and silently wiping the menu.
 - **Status/role are strings cast to PHP enums**, not native MySQL `ENUM` columns — adding a status
@@ -114,7 +135,9 @@ loop (artisan, Vite HMR) stays fast.
 - **Plain JavaScript + plain CSS**, no UI kit, to keep the submission small and easy to review.
 - **Cart is client-side** (React context + `useReducer`, persisted to `localStorage`). A pre-checkout
   cart is ephemeral; persisting it server-side would force guest sessions or login-before-browsing.
-  Cart prices are shown as an *estimate*; the order confirmation shows the server's totals.
+  **Its totals are not**: the cart and checkout POST the lines to `/cart/preview` and display what
+  comes back, so discounts are never calculated in the browser. An applied promo code is kept with
+  the cart, so it survives moving between the cart and checkout.
 - **axios instance with interceptors** attaches the token and normalises every failure into
   `ApiError {status, message, errors}`; on a `401` it drops the stale token and signs the user out.
 - **Server-side validation is the single source of truth** — forms display Laravel's 422 field errors
@@ -194,15 +217,28 @@ Created by the seeder (`database/seeders/UserSeeder.php`):
 
 | Role | Email | Password | Log in at |
 | ---- | ----- | -------- | --------- |
-| **Admin** | `admin@foodapp.test` | `password` | http://localhost:5173/admin/login |
-| Customer | `customer@foodapp.test` | `password` | http://localhost:5173/login |
+| **Admin** | `admin@leueats.test` | `password` | http://localhost:5173/admin/login |
+| Customer | `customer@leueats.test` | `password` | http://localhost:5173/login |
 
 - The demo customer already has 4 orders (delivered, preparing, pending) to show order history and tracking.
 - To register a **new admin** at `/admin/register`, use the registration code from `backend/.env`:
   `ADMIN_REGISTRATION_CODE=letmein-admin`.
 - "Truffle Mushroom Burger" is seeded as **unavailable**: hidden from the storefront, visible in the admin panel.
+- 8 dishes are seeded **on offer** (some with an end date, some open-ended) — see `/deals`.
 
-**Quick tour:** add a few dishes to the cart → check out as the demo customer → open the order page →
+Seeded promo codes (try them in the cart or at checkout):
+
+| Code | Effect | Minimum order | Note |
+| ---- | ------ | ------------- | ---- |
+| `WELCOME10` | 10% off | EUR 15 | |
+| `FREESHIP` | Free delivery | EUR 20 | |
+| `SAVE5` | EUR 5 off | EUR 30 | |
+| `STUDENT15` | 15% off | — | **Not** listed on the Deals page (private code) |
+| `SUMMER25` | 25% off | — | **Expired on purpose** — shows the rejection message |
+
+**Quick tour:** open `/deals` and copy `WELCOME10` → add a few dishes to the cart (some are
+discounted) → apply the code and watch the total drop → check out as the demo customer → open the
+order page →
 in another browser/incognito window log in as admin → *Orders* → advance the order's status → watch the
 customer's timeline update within 15 s.
 
@@ -212,7 +248,7 @@ customer's timeline update within 15 s.
 
 ```bash
 cd backend
-php artisan test                # 69 tests — uses in-memory SQLite, Docker not required
+php artisan test                # 105 tests — uses in-memory SQLite, Docker not required
 ```
 
 Covered: auth (role escalation attempts, invite code, token revocation, 401 JSON without `Accept`),
@@ -244,8 +280,10 @@ Base URL: `http://127.0.0.1:8000/api/v1` · JSON in/out · protected routes need
 | `POST` | `/login` | Log in (customer or admin) → `{ data: { user, token } }` |
 | `GET`  | `/shop` | Storefront settings: `currency`, `delivery_fee`, `max_item_quantity` |
 | `GET`  | `/categories` | All categories with count of available products |
-| `GET`  | `/products?category={slug}&search={text}&page={n}&per_page={n}` | Available products (paginated) |
+| `GET`  | `/products?category={slug}&search={text}&on_offer=1&page={n}&per_page={n}` | Available products (paginated); `on_offer=1` lists only discounted dishes |
 | `GET`  | `/products/{slug}` | One available product |
+| `GET`  | `/promotions` | Publicly advertised promo codes (active, in date, not exhausted) |
+| `POST` | `/cart/preview` | Prices a cart (offers + promo code) without creating an order |
 
 Auth endpoints are rate-limited to 10 requests/minute.
 
@@ -266,7 +304,8 @@ Auth endpoints are rate-limited to 10 requests/minute.
   "items": [{ "product_id": 1, "quantity": 2 }, { "product_id": 7, "quantity": 1 }],
   "delivery_address": "221B Baker Street, London",
   "contact_phone": "+44 20 7946 0958",
-  "notes": "Ring the bell"
+  "notes": "Ring the bell",
+  "promo_code": "WELCOME10"
 }
 ```
 
@@ -279,6 +318,8 @@ Auth endpoints are rate-limited to 10 requests/minute.
 | `GET` · `PUT` · `DELETE` | `/admin/categories/{id}` | Show · update · delete (`409` if it has products) |
 | `GET` · `POST` | `/admin/products?category=&search=&page=` | List **all** products (incl. unavailable) · create |
 | `GET` · `PUT` · `DELETE` | `/admin/products/{id}` | Show · update · delete |
+| `GET` · `POST` | `/admin/promo-codes` | List (+ the type list for the UI) · create |
+| `GET` · `PUT` · `DELETE` | `/admin/promo-codes/{id}` | Show · update · delete |
 | `GET` | `/admin/orders?status=&search=&page=` | All orders (search: order number, customer name/email) + `statuses` list |
 | `GET` | `/admin/orders/{id}` | Order with items and customer |
 | `PATCH` | `/admin/orders/{id}/status` | `{ "status": "preparing" }` — must be an allowed transition |
@@ -317,16 +358,25 @@ All tables are created by Laravel migrations in `backend/database/migrations` (n
 users           id, name, email (unique), password, role ['admin'|'customer'], timestamps
 categories      id, name, slug (unique), description?, timestamps
 products        id, category_id → categories (RESTRICT), name, slug (unique), description?,
-                price decimal(10,2), image_url?, is_available, timestamps
+                price decimal(10,2), discount_price?, discount_ends_at?, image_url?,
+                is_available, timestamps
+promo_codes     id, code (unique), description?, type [percent|fixed|free_delivery], value,
+                min_subtotal, starts_at?, ends_at?, max_uses?, uses_count,
+                is_active, is_public, timestamps
 orders          id, user_id → users (RESTRICT), order_number (unique), status, subtotal,
-                delivery_fee, total, delivery_address, contact_phone, notes?, timestamps
+                delivery_fee, promo_code?, discount_total, total, delivery_address,
+                contact_phone, notes?, timestamps
 order_items     id, order_id → orders (CASCADE), product_id → products (SET NULL),
-                product_name, unit_price, quantity, line_total, timestamps
+                product_name, unit_price, original_unit_price?, quantity, line_total, timestamps
 personal_access_tokens   (Sanctum)
 ```
 
 Relationships: `Category hasMany Product` · `User hasMany Order` · `Order hasMany OrderItem` ·
 `OrderItem belongsTo Product` (nullable).
+
+Order totals: `total = subtotal + delivery_fee - discount_total`. An order stores the promo code as a
+string, so deleting the code later never rewrites what a customer was charged, and `order_items`
+keeps `original_unit_price` when a line was bought on offer.
 
 ---
 

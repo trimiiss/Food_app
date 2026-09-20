@@ -10,7 +10,7 @@ import axios from 'axios'
  *   listeners so AuthContext can log the user out.
  */
 
-const TOKEN_KEY = 'foodapp.token'
+const TOKEN_KEY = 'leueats.token'
 
 // localStorage can throw (private mode, blocked storage) — never let that crash the app.
 export const tokenStorage = {

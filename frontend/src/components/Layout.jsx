@@ -10,7 +10,7 @@ export default function Layout() {
         <Outlet />
       </main>
       <footer className="footer">
-        <div className="container">FoodApp demo — Laravel REST API + React SPA</div>
+        <div className="container">LeuEats demo — Laravel REST API + React SPA</div>
       </footer>
     </div>
   )
