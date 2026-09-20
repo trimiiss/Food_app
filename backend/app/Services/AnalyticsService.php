@@ -179,9 +179,7 @@ class AnalyticsService
             ->selectRaw('COUNT(*) as orders')
             ->selectRaw('SUM(total) as sales')
             ->get()
-            ->keyBy(fn ($row) => $row->fulfillment_type instanceof FulfillmentType
-                ? $row->fulfillment_type->value
-                : (string) $row->fulfillment_type);
+            ->keyBy(fn ($row) => $row->fulfillment()->value);
 
         return collect(FulfillmentType::cases())
             ->map(function (FulfillmentType $type) use ($rows) {

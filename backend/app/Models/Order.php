@@ -57,6 +57,18 @@ class Order extends Model
     }
 
     /**
+     * How this order is fulfilled, never null.
+     *
+     * Orders placed before pickup existed were all deliveries, and so is a row
+     * read from a database where the fulfillment_type migration hasn't run yet
+     * — reading an order must not be what tells you that.
+     */
+    public function fulfillment(): FulfillmentType
+    {
+        return $this->fulfillment_type ?? FulfillmentType::Delivery;
+    }
+
+    /**
      * The admin list filters, shared by the orders table and its CSV export so
      * that "export" always means "what I am looking at".
      *

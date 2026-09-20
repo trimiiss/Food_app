@@ -56,7 +56,7 @@ class OrderExportController extends Controller
                             $order->order_number,
                             $order->created_at?->toDateTimeString(),
                             $order->status->label(),
-                            $order->fulfillment_type->label(),
+                            $order->fulfillment()->label(),
                             $order->user?->name,
                             $order->user?->email,
                             $order->contact_phone,

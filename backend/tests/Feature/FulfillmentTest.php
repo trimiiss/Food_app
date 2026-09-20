@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\OrderStatus;
+use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\PromoCode;
@@ -211,6 +212,25 @@ class FulfillmentTest extends TestCase
         $this->getJson("/api/v1/orders/{$delivery->id}")
             ->assertOk()
             ->assertJsonPath('data.allowed_transitions.0.label', 'Out for delivery');
+    }
+
+    public function test_an_order_with_no_fulfillment_recorded_still_reads_as_a_delivery(): void
+    {
+        $order = Order::factory()->create();
+
+        // Exactly what a row looks like when the fulfillment_type migration has
+        // not run yet: the attribute simply isn't there. Reading an order must
+        // not be what tells you that.
+        $legacy = (new Order)->setRawAttributes(
+            collect($order->getAttributes())->except('fulfillment_type')->all(),
+            true,
+        );
+
+        $data = (new OrderResource($legacy))->toArray(request());
+
+        $this->assertSame('delivery', $data['fulfillment_type']);
+        $this->assertSame('Delivery', $data['fulfillment_label']);
+        $this->assertSame('Pending', $data['status_label']);
     }
 
     public function test_admin_can_filter_orders_by_fulfillment_type(): void
