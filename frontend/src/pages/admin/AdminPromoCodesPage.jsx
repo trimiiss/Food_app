@@ -5,7 +5,7 @@ import FormField from '../../components/FormField'
 import { useShop } from '../../context/ShopContext'
 import { useApi } from '../../hooks/useApi'
 import { useForm } from '../../hooks/useForm'
-import { formatDateTime } from '../../utils/format'
+import { formatDate } from '../../utils/format'
 
 const EMPTY = {
   code: '',
@@ -110,7 +110,7 @@ export default function AdminPromoCodesPage() {
       {flash && <div className="alert alert-success">{flash}</div>}
       <ErrorMessage error={actionError} />
 
-      <div className="admin-form-grid">
+      <div className="promo-layout">
         <div>
           {promoCodes.error && !promoCodes.data ? (
             <ErrorMessage error={promoCodes.error} onRetry={promoCodes.reload} />
@@ -144,13 +144,13 @@ export default function AdminPromoCodesPage() {
                       <tr key={promo.id} className={editing?.id === promo.id ? 'is-selected' : ''}>
                         <td>
                           <strong className="order-number">{promo.code}</strong>
-                          {promo.description && <div className="muted small">{promo.description}</div>}
+                          {promo.description && <div className="muted small promo-description">{promo.description}</div>}
                         </td>
                         <td>{promo.summary}</td>
                         <td className="num">{promo.min_subtotal > 0 ? money(promo.min_subtotal) : '—'}</td>
-                        <td className="small">
-                          {promo.starts_at && <div>from {formatDateTime(promo.starts_at)}</div>}
-                          {promo.ends_at ? <div>until {formatDateTime(promo.ends_at)}</div> : <div className="muted">no end date</div>}
+                        <td className="small nowrap">
+                          {promo.starts_at && <div>from {formatDate(promo.starts_at)}</div>}
+                          {promo.ends_at ? <div>until {formatDate(promo.ends_at)}</div> : <div className="muted">—</div>}
                         </td>
                         <td className="num">
                           {promo.uses_count}
@@ -176,7 +176,7 @@ export default function AdminPromoCodesPage() {
           )}
         </div>
 
-        <aside className="card">
+        <aside className="card promo-form">
           <h2>{editing ? `Edit ${editing.code}` : 'New promo code'}</h2>
           <form className="form" onSubmit={handleSubmit} noValidate>
             <ErrorMessage error={form.formError} />

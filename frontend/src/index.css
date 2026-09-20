@@ -2164,3 +2164,22 @@ a.stat-card:hover {
   font-weight: 700;
   color: var(--color-primary);
 }
+
+/* ---- Admin: promo codes ----------------------------------------------------- */
+/* Seven columns don't fit beside a form, so the table gets the full width. */
+.promo-layout {
+  display: grid;
+  gap: 24px;
+}
+
+.promo-form {
+  max-width: 560px;
+}
+
+.promo-description {
+  max-width: 260px;
+}
+
+.table .badge {
+  white-space: nowrap;
+}

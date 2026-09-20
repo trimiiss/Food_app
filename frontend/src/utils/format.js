@@ -23,6 +23,13 @@ export function formatDateTime(isoString) {
   return isoString ? dateTimeFormatter.format(new Date(isoString)) : ''
 }
 
+const dateFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' })
+
+/** Date without the time, for compact table cells. */
+export function formatDate(isoString) {
+  return isoString ? dateFormatter.format(new Date(isoString)) : ''
+}
+
 /** "1 product" / "3 products" */
 export function pluralize(count, singular, plural = `${singular}s`) {
   return `${count} ${count === 1 ? singular : plural}`
