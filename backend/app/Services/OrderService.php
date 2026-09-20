@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
+use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -51,8 +52,9 @@ class OrderService
                 ]);
             }
 
-            // Integer cents: float addition (0.1 + 0.2 !== 0.3) must not touch money.
-            $unitCents = self::toCents($product->price);
+            // Charge the offer price when one is running; Money keeps this in
+            // integer cents so float addition never touches money.
+            $unitCents = Money::toCents($product->effectivePrice());
             $lineCents = $unitCents * $item['quantity'];
             $subtotalCents += $lineCents;
 
@@ -60,13 +62,15 @@ class OrderService
                 'product_id' => $product->id,
                 // Snapshot: later edits to the product must not alter this order.
                 'product_name' => $product->name,
-                'unit_price' => self::fromCents($unitCents),
+                'unit_price' => Money::fromCents($unitCents),
+                // Keeps "was EUR x.xx" on the receipt after the offer ends.
+                'original_unit_price' => $product->isOnOffer() ? $product->price : null,
                 'quantity' => $item['quantity'],
-                'line_total' => self::fromCents($lineCents),
+                'line_total' => Money::fromCents($lineCents),
             ];
         }
 
-        $deliveryFeeCents = self::toCents(config('shop.delivery_fee'));
+        $deliveryFeeCents = Money::toCents(config('shop.delivery_fee'));
 
         // All-or-nothing: an order without its items must never exist.
         return DB::transaction(function () use ($user, $data, $lines, $subtotalCents, $deliveryFeeCents) {
@@ -74,9 +78,9 @@ class OrderService
                 'user_id' => $user->id,
                 'order_number' => Order::generateOrderNumber(),
                 'status' => OrderStatus::Pending,
-                'subtotal' => self::fromCents($subtotalCents),
-                'delivery_fee' => self::fromCents($deliveryFeeCents),
-                'total' => self::fromCents($subtotalCents + $deliveryFeeCents),
+                'subtotal' => Money::fromCents($subtotalCents),
+                'delivery_fee' => Money::fromCents($deliveryFeeCents),
+                'total' => Money::fromCents($subtotalCents + $deliveryFeeCents),
                 'delivery_address' => $data['delivery_address'],
                 'contact_phone' => $data['contact_phone'],
                 'notes' => $data['notes'] ?? null,
@@ -125,13 +129,4 @@ class OrderService
         return $this->transition($order, OrderStatus::Cancelled);
     }
 
-    private static function toCents(string|int|float $amount): int
-    {
-        return (int) round((float) $amount * 100);
-    }
-
-    private static function fromCents(int $cents): string
-    {
-        return number_format($cents / 100, 2, '.', '');
-    }
 }

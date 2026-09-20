@@ -22,8 +22,15 @@ class ProductIndexRequest extends FormRequest
         return [
             'category' => ['nullable', 'string', 'max:120'],
             'search' => ['nullable', 'string', 'max:100'],
+            'on_offer' => ['nullable', 'boolean'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ];
+    }
+
+    /** Whether the caller asked for discounted products only. */
+    public function onlyOffers(): bool
+    {
+        return $this->boolean('on_offer');
     }
 
     public function perPage(): int

@@ -32,6 +32,14 @@ class ProductRequest extends FormRequest
                 ? filter_var($this->input('is_available'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE)
                 : true,
         ]);
+
+        // Empty strings from a form mean "no offer"; an end date without a
+        // discount price would be meaningless, so clear it too.
+        if (blank($this->input('discount_price'))) {
+            $this->merge(['discount_price' => null, 'discount_ends_at' => null]);
+        } elseif (blank($this->input('discount_ends_at'))) {
+            $this->merge(['discount_ends_at' => null]);
+        }
     }
 
     /**
@@ -48,6 +56,9 @@ class ProductRequest extends FormRequest
             ],
             'description' => ['nullable', 'string', 'max:2000'],
             'price' => ['required', 'numeric', 'decimal:0,2', 'min:0.01', 'max:9999.99'],
+            // An "offer" that costs more than the normal price is a bug, not a deal.
+            'discount_price' => ['nullable', 'numeric', 'decimal:0,2', 'min:0.01', 'lt:price'],
+            'discount_ends_at' => ['nullable', 'date', 'after:now'],
             'image_url' => ['nullable', 'url:http,https', 'max:500'],
             'is_available' => ['required', 'boolean'],
         ];
@@ -77,6 +88,8 @@ class ProductRequest extends FormRequest
             'category_id' => 'category',
             'image_url' => 'image URL',
             'is_available' => 'availability',
+            'discount_price' => 'offer price',
+            'discount_ends_at' => 'offer end date',
         ];
     }
 }

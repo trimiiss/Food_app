@@ -28,6 +28,8 @@ class ProductController extends Controller
             ->when($request->validated('search'), function ($query, string $search) {
                 $query->where('name', 'like', "%{$search}%");
             })
+            // ?on_offer=1 powers the storefront's "Deals" view.
+            ->when($request->onlyOffers(), fn ($query) => $query->onOffer())
             ->orderBy('name')
             ->paginate($request->perPage())
             ->withQueryString();

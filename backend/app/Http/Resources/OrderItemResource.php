@@ -22,6 +22,8 @@ class OrderItemResource extends JsonResource
             'product_id' => $this->product_id,
             'product_name' => $this->product_name,
             'unit_price' => (float) $this->unit_price,
+            // Set only when the line was bought on offer ("was EUR x.xx").
+            'original_unit_price' => $this->original_unit_price === null ? null : (float) $this->original_unit_price,
             'quantity' => $this->quantity,
             'line_total' => (float) $this->line_total,
         ];

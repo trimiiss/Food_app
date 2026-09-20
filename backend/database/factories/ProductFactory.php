@@ -36,4 +36,13 @@ class ProductFactory extends Factory
             'is_available' => false,
         ]);
     }
+
+    /** Running offer: 25% off by default, optionally ending at a given time. */
+    public function onOffer(?float $discountPrice = null, ?string $endsAt = null): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'discount_price' => $discountPrice ?? round($attributes['price'] * 0.75, 2),
+            'discount_ends_at' => $endsAt,
+        ]);
+    }
 }
