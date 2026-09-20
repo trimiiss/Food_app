@@ -16,3 +16,6 @@ export const getProducts = (params, options) =>
 
 export const getProduct = (slug, options) =>
   client.get(`/products/${encodeURIComponent(slug)}`, options).then((r) => r.data.data)
+
+/** Publicly advertised promo codes for the Deals page. */
+export const getPromotions = (options) => client.get('/promotions', options).then((r) => r.data.data)

@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { getProduct } from '../api/catalog'
 import { EmptyState, ErrorMessage, Loader } from '../components/Feedback'
+import Price from '../components/Price'
 import ProductImage from '../components/ProductImage'
 import QuantityStepper from '../components/QuantityStepper'
 import { useCart } from '../context/CartContext'
 import { useShop } from '../context/ShopContext'
 import { useAddToCart } from '../hooks/useAddToCart'
 import { useApi } from '../hooks/useApi'
+import { formatDateTime } from '../utils/format'
 
 export default function ProductDetailPage() {
   const { slug } = useParams()
@@ -51,13 +53,18 @@ export default function ProductDetailPage() {
             </Link>
           )}
           <h1>{product.name}</h1>
-          <p className="price price-lg">{money(product.price)}</p>
+          <p className="product-detail-price">
+            <Price product={product} size="lg" />
+          </p>
+          {product.is_on_offer && product.discount_ends_at && (
+            <p className="offer-note">🔥 Offer ends {formatDateTime(product.discount_ends_at)}</p>
+          )}
           {product.description && <p className="product-detail-description">{product.description}</p>}
 
           <div className="row add-row">
             <QuantityStepper value={quantity} onChange={setQuantity} max={maxQuantity} />
             <button type="button" className="btn btn-primary" onClick={() => add(product, quantity)}>
-              {justAdded ? 'Added ✓' : `Add to cart · ${money(product.price * quantity)}`}
+              {justAdded ? 'Added ✓' : `Add to cart · ${money(product.effective_price * quantity)}`}
             </button>
           </div>
 

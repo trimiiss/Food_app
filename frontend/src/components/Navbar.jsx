@@ -23,6 +23,9 @@ export default function Navbar() {
           <NavLink to="/" end>
             Menu
           </NavLink>
+          <NavLink to="/deals">
+            Deals <span aria-hidden="true">🔥</span>
+          </NavLink>
           {user && <NavLink to="/orders">My orders</NavLink>}
           {isAdmin && <NavLink to="/admin">Admin</NavLink>}
         </nav>

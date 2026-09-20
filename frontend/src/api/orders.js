@@ -11,3 +11,10 @@ export const getMyOrders = (params, options) => client.get('/orders', { params, 
 export const getMyOrder = (id, options) => client.get(`/orders/${id}`, options).then((r) => r.data.data)
 
 export const cancelMyOrder = (id) => client.post(`/orders/${id}/cancel`).then((r) => r.data.data)
+
+/**
+ * Prices a cart server-side (offers + promo code) without creating an order,
+ * so the cart, checkout and the final charge all agree.
+ */
+export const previewCart = (items, promoCode, options) =>
+  client.post('/cart/preview', { items, promo_code: promoCode || null }, options).then((r) => r.data.data)

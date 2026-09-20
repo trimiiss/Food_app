@@ -17,21 +17,21 @@ class PromoCodeSeeder extends Seeder
         $codes = [
             [
                 'code' => 'WELCOME10',
-                'description' => '10% off your order',
+                'description' => 'On everything, including dishes already on offer',
                 'type' => PromoCodeType::Percent,
                 'value' => 10,
                 'min_subtotal' => 15,
             ],
             [
                 'code' => 'FREESHIP',
-                'description' => 'Free delivery on orders over 20',
+                'description' => 'No delivery fee on your order',
                 'type' => PromoCodeType::FreeDelivery,
                 'value' => 0,
                 'min_subtotal' => 20,
             ],
             [
                 'code' => 'SAVE5',
-                'description' => '5 off when you spend 30',
+                'description' => 'Straight off your order total',
                 'type' => PromoCodeType::Fixed,
                 'value' => 5,
                 'min_subtotal' => 30,

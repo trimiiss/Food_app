@@ -12,6 +12,7 @@ import AdminRegisterPage from './pages/admin/AdminRegisterPage'
 import DashboardPage from './pages/admin/DashboardPage'
 import CartPage from './pages/CartPage'
 import CheckoutPage from './pages/CheckoutPage'
+import DealsPage from './pages/DealsPage'
 import LoginPage from './pages/LoginPage'
 import NotFoundPage from './pages/NotFoundPage'
 import OrderDetailPage from './pages/OrderDetailPage'
@@ -32,6 +33,7 @@ export default function App() {
       <Route element={<Layout />}>
         <Route index element={<ProductListPage />} />
         <Route path="products/:slug" element={<ProductDetailPage />} />
+        <Route path="deals" element={<DealsPage />} />
         <Route path="cart" element={<CartPage />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />

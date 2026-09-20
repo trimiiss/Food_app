@@ -1,16 +1,16 @@
 import { Link } from 'react-router'
-import { useShop } from '../context/ShopContext'
 import { useAddToCart } from '../hooks/useAddToCart'
+import Price from './Price'
 import ProductImage from './ProductImage'
 
 export default function ProductCard({ product }) {
-  const { money } = useShop()
   const { add, justAdded } = useAddToCart()
 
   return (
-    <article className="product-card">
+    <article className={`product-card ${product.is_on_offer ? 'is-on-offer' : ''}`}>
       <Link to={`/products/${product.slug}`} className="product-card-media" tabIndex={-1} aria-hidden="true">
         <ProductImage src={product.image_url} alt="" />
+        {product.is_on_offer && <span className="ribbon">-{product.discount_percentage}%</span>}
       </Link>
 
       <div className="product-card-body">
@@ -21,7 +21,7 @@ export default function ProductCard({ product }) {
         {product.description && <p className="product-card-description">{product.description}</p>}
 
         <div className="product-card-footer">
-          <span className="price">{money(product.price)}</span>
+          <Price product={product} />
           <button
             type="button"
             className={`btn btn-sm ${justAdded ? 'btn-secondary' : 'btn-primary'}`}
