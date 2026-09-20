@@ -13,8 +13,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 #[Fillable([
-    'user_id', 'order_number', 'status', 'subtotal', 'delivery_fee', 'total',
-    'delivery_address', 'contact_phone', 'notes',
+    'user_id', 'order_number', 'status', 'subtotal', 'delivery_fee', 'promo_code',
+    'discount_total', 'total', 'delivery_address', 'contact_phone', 'notes',
 ])]
 class Order extends Model
 {
@@ -30,6 +30,7 @@ class Order extends Model
             'status' => OrderStatus::class,
             'subtotal' => 'decimal:2',
             'delivery_fee' => 'decimal:2',
+            'discount_total' => 'decimal:2',
             'total' => 'decimal:2',
         ];
     }

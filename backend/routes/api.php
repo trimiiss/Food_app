@@ -2,9 +2,11 @@
 
 use App\Http\Controllers\Api\V1\Admin;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\PromotionController;
 use App\Http\Controllers\Api\V1\ShopSettingsController;
 use Illuminate\Support\Facades\Route;
 
@@ -36,6 +38,12 @@ Route::prefix('v1')->group(function () {
     Route::get('categories', [CategoryController::class, 'index']);
     Route::get('products', [ProductController::class, 'index']);
     Route::get('products/{product:slug}', [ProductController::class, 'show']);
+    // Publicly advertised promo codes for the Deals page.
+    Route::get('promotions', [PromotionController::class, 'index']);
+
+    // Prices a cart (offers + promo code) without creating an order. Throttled:
+    // it is also the only endpoint that tells you whether a code is valid.
+    Route::post('cart/preview', [CartController::class, 'preview'])->middleware('throttle:60,1');
 
     // ---- Signed-in users --------------------------------------------------
     Route::middleware('auth:sanctum')->group(function () {

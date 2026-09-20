@@ -30,6 +30,9 @@ class OrderResource extends JsonResource
             'can_cancel' => $this->status->isCancellableByCustomer(),
             'subtotal' => (float) $this->subtotal,
             'delivery_fee' => (float) $this->delivery_fee,
+            // total = subtotal + delivery_fee - discount_total
+            'promo_code' => $this->promo_code,
+            'discount_total' => (float) $this->discount_total,
             'total' => (float) $this->total,
             'delivery_address' => $this->delivery_address,
             'contact_phone' => $this->contact_phone,
