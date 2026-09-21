@@ -1,7 +1,7 @@
 /**
  * Category navigation for the menu.
  *
- * A sidebar rather than a row of chips: the menu has 9 categories, which
+ * A sidebar rather than a row of chips: the menu has a dozen categories, which
  * overflowed a single row, and a vertical list stays readable as more
  * categories are added. On narrow screens it collapses into a horizontal
  * scroller, where a tall list would push the food off-screen.

@@ -28,8 +28,8 @@ class DatabaseSeederTest extends TestCase
             ->assertJsonPath('data.user.role', 'customer');
 
         // Storefront has content; the one unavailable product is hidden.
-        $this->getJson('/api/v1/categories')->assertOk()->assertJsonCount(9, 'data');
-        $this->getJson('/api/v1/products')->assertOk()->assertJsonPath('meta.total', 47);
+        $this->getJson('/api/v1/categories')->assertOk()->assertJsonCount(12, 'data');
+        $this->getJson('/api/v1/products')->assertOk()->assertJsonPath('meta.total', 101);
 
         $this->assertDatabaseCount('orders', 4);
     }
@@ -40,8 +40,8 @@ class DatabaseSeederTest extends TestCase
         $this->seed(DatabaseSeeder::class);
 
         $this->assertDatabaseCount('users', 2);
-        $this->assertDatabaseCount('categories', 9);
-        $this->assertDatabaseCount('products', 48);
+        $this->assertDatabaseCount('categories', 12);
+        $this->assertDatabaseCount('products', 102);
         $this->assertDatabaseCount('orders', 4);
     }
 }
