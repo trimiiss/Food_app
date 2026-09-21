@@ -34,12 +34,9 @@ function loadDecision() {
 
 export function ConsentProvider({ children }) {
   const [decision, setDecision] = useState(loadDecision)
-  // Reopened from the footer, even after a choice has been made.
-  const [reviewing, setReviewing] = useState(false)
 
   const decide = useCallback((next) => {
     setDecision(next)
-    setReviewing(false)
     try {
       localStorage.setItem(STORAGE_KEY, next)
       if (next === ESSENTIAL) {
@@ -67,12 +64,12 @@ export function ConsentProvider({ children }) {
       decision,
       /** Where the cart and preferences may be kept, given the choice. */
       storage: decision === ACCEPTED ? 'local' : 'session',
-      isAsking: decision === null || reviewing,
-      review: () => setReviewing(true),
+      // Asked once, on the first visit; the answer is remembered after that.
+      isAsking: decision === null,
       accept: () => decide(ACCEPTED),
       essentialOnly: () => decide(ESSENTIAL),
     }),
-    [decision, reviewing, decide],
+    [decision, decide],
   )
 
   return <ConsentContext.Provider value={value}>{children}</ConsentContext.Provider>

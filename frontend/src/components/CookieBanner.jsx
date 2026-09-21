@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react'
 import { useConsent } from '../context/ConsentContext'
 
 /**
@@ -9,13 +8,7 @@ import { useConsent } from '../context/ConsentContext'
  * behaviour (see ConsentContext) rather than both meaning "yes".
  */
 export default function CookieBanner() {
-  const { isAsking, decision, accept, essentialOnly } = useConsent()
-  const acceptRef = useRef(null)
-
-  // Reopened from the footer: move focus to the choice, not back to the top.
-  useEffect(() => {
-    if (isAsking && decision !== null) acceptRef.current?.focus()
-  }, [isAsking, decision])
+  const { isAsking, accept, essentialOnly } = useConsent()
 
   if (!isAsking) return null
 
@@ -31,7 +24,7 @@ export default function CookieBanner() {
           </p>
         </div>
         <div className="cookie-banner-actions">
-          <button type="button" className="btn btn-primary" onClick={accept} ref={acceptRef}>
+          <button type="button" className="btn btn-primary" onClick={accept}>
             Accept
           </button>
           <button type="button" className="btn btn-secondary" onClick={essentialOnly}>
