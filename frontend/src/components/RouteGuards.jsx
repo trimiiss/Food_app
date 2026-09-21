@@ -24,7 +24,7 @@ export function RequireAdmin() {
   const location = useLocation()
 
   if (initialising) return <Loader label="Checking your session…" />
-  if (!user) return <Navigate to="/admin/login" replace state={{ from: location }} />
+  if (!user) return <Navigate to="/login" replace state={{ from: location }} />
 
   if (!isAdmin) {
     return (

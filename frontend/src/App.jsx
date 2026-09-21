@@ -1,9 +1,8 @@
-import { Route, Routes } from 'react-router'
+import { Navigate, Route, Routes } from 'react-router'
 import Layout from './components/Layout'
 import { RequireAdmin, RequireAuth } from './components/RouteGuards'
 import AdminCategoriesPage from './pages/admin/AdminCategoriesPage'
 import AdminLayout from './pages/admin/AdminLayout'
-import AdminLoginPage from './pages/admin/AdminLoginPage'
 import AdminOrderDetailPage from './pages/admin/AdminOrderDetailPage'
 import AdminOrdersPage from './pages/admin/AdminOrdersPage'
 import AdminProductFormPage from './pages/admin/AdminProductFormPage'
@@ -39,7 +38,8 @@ export default function App() {
         <Route path="cart" element={<CartPage />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />
-        <Route path="admin/login" element={<AdminLoginPage />} />
+        {/* Admins now sign in on the same page as customers; keep the old address working. */}
+        <Route path="admin/login" element={<Navigate to="/login" replace />} />
         <Route path="admin/register" element={<AdminRegisterPage />} />
 
         <Route element={<RequireAuth />}>

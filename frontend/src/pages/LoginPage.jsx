@@ -4,27 +4,29 @@ import FormField from '../components/FormField'
 import { useAuth } from '../context/AuthContext'
 import { useForm } from '../hooks/useForm'
 
+/** The one login page for everyone: customers and admins sign in the same way. */
 export default function LoginPage() {
   const { user, login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const form = useForm({ email: '', password: '' })
 
-  // Return to the page that sent the visitor here (e.g. checkout).
+  // Return to the page that sent the visitor here (e.g. checkout or an admin
+  // page); otherwise admins land on their panel and customers on the menu.
   const from = location.state?.from
-  const redirectTo = from ? `${from.pathname}${from.search ?? ''}` : '/'
+  const redirectFor = (account) => (from ? `${from.pathname}${from.search ?? ''}` : account.is_admin ? '/admin' : '/')
 
-  if (user) return <Navigate to={redirectTo} replace />
+  if (user) return <Navigate to={redirectFor(user)} replace />
 
   const handleSubmit = form.submit(async (values) => {
-    await login(values)
-    navigate(redirectTo, { replace: true })
+    const account = await login(values)
+    navigate(redirectFor(account), { replace: true })
   })
 
   return (
     <div className="card auth-card">
       <h1>Welcome back</h1>
-      <p className="muted">Log in to place orders and track them.</p>
+      <p className="muted">Log in to place and track orders. Admins go straight to the admin panel.</p>
 
       <form className="form" onSubmit={handleSubmit} noValidate>
         <ErrorMessage error={form.formError} />
@@ -52,13 +54,15 @@ export default function LoginPage() {
       <div className="alert alert-info demo-hint">
         <span>
           Demo customer: <code>customer@leueats.test</code> / <code>password</code>
+          <br />
+          Demo admin: <code>admin@leueats.test</code> / <code>password</code>
         </span>
       </div>
 
       <p className="auth-footer">
         New here? <Link to="/register" state={location.state}>Create an account</Link>
         <br />
-        Staff? <Link to="/admin/login">Admin login</Link>
+        Staff? <Link to="/admin/register">Register an admin account</Link>
       </p>
     </div>
   )
