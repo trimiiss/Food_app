@@ -36,6 +36,26 @@ services:
       retries: 20
       start_period: 30s
 
+  # Browse the database in a browser: tables, rows, ad-hoc SQL.
+  #
+  # Opt-in, so a plain `docker compose up -d` still starts nothing but MySQL:
+  #
+  #   docker compose --profile tools up -d adminer   →  http://localhost:8080
+  #
+  # Server "mysql", user/password/database as above.
+  adminer:
+    image: adminer:5
+    container_name: foodapp-adminer
+    profiles: ["tools"]
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    environment:
+      ADMINER_DEFAULT_SERVER: mysql
+      ADMINER_DESIGN: dracula
+    ports:
+      - "${ADMINER_PORT:-8080}:8080"
+
 volumes:
   foodapp_mysql_data:
     name: foodapp_mysql_data
