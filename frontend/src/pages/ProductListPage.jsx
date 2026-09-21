@@ -45,7 +45,6 @@ export default function ProductListPage() {
   }, [searchInput])
 
   const activeCategory = categories.data?.find((item) => item.slug === category)
-  const totalAvailable = categories.data?.reduce((total, item) => total + item.products_count, 0)
 
   const selectCategory = (slug) => {
     updateParams({ category: slug })
@@ -66,7 +65,6 @@ export default function ProductListPage() {
           categories={categories.data ?? []}
           activeSlug={category}
           onSelect={selectCategory}
-          totalCount={totalAvailable}
         />
 
         <div className="menu-content">

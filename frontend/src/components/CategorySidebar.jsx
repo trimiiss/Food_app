@@ -2,11 +2,11 @@
  * Category navigation for the menu.
  *
  * A sidebar rather than a row of chips: the menu has 9 categories, which
- * overflowed a single row, and a vertical list leaves room for the count and
- * stays readable as more categories are added. On narrow screens it collapses
- * into a horizontal scroller, where a tall list would push the food off-screen.
+ * overflowed a single row, and a vertical list stays readable as more
+ * categories are added. On narrow screens it collapses into a horizontal
+ * scroller, where a tall list would push the food off-screen.
  */
-export default function CategorySidebar({ categories = [], activeSlug, onSelect, totalCount }) {
+export default function CategorySidebar({ categories = [], activeSlug, onSelect }) {
   return (
     <aside className="category-sidebar">
       <h2 className="category-sidebar-title">Categories</h2>
@@ -19,8 +19,7 @@ export default function CategorySidebar({ categories = [], activeSlug, onSelect,
               aria-current={activeSlug === '' ? 'true' : undefined}
               onClick={() => onSelect('')}
             >
-              <span>All dishes</span>
-              {totalCount != null && <span className="category-count">{totalCount}</span>}
+              All dishes
             </button>
           </li>
           {categories.map((category) => (
@@ -31,8 +30,7 @@ export default function CategorySidebar({ categories = [], activeSlug, onSelect,
                 aria-current={activeSlug === category.slug ? 'true' : undefined}
                 onClick={() => onSelect(category.slug)}
               >
-                <span>{category.name}</span>
-                <span className="category-count">{category.products_count}</span>
+                {category.name}
               </button>
             </li>
           ))}
